@@ -1,0 +1,14 @@
+#pragma once
+
+#include <stdint.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ROM functions that we are going to use for ease of use
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int ets_printf(const char *fmt, ...);
+int uart_tx_one_char(uint8_t TxChar);
+int uart_rx_one_char(uint8_t *pRxChar);
+int esp_rom_spiflash_read(uint32_t src_addr, uint32_t *dest, int32_t len);
+
+void* xthal_memcpy(void *dst, const void *src, size_t len);

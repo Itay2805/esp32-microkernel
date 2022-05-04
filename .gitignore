@@ -1,0 +1,8 @@
+out
+toolchain/esptool-*-linux-amd64
+toolchain/xtensa-esp32-elf
+toolchain/*.tar*
+toolchain/*.zip
+.idea
+cmake-build-debug
+CMakeLists.txt
