@@ -90,19 +90,19 @@ static void load_kernel() {
     ASSERT(vdso_header.vecbase < (uintptr_t)VDSO_CODE_BASE + vdso_header.code_size);
 
     // load the code and data to their places
-    TRACE("\tLoading code (%d bytes)", kernel_header.code_size);
+    TRACE("\tLoading code %p (%d bytes)", KERNEL_CODE_BASE, kernel_header.code_size);
     spiflash_read(0x2000, KERNEL_CODE_BASE, kernel_header.code_size);
-    TRACE("\tLoading data (%d bytes)", kernel_header.data_size);
-    spiflash_read(0x2000 + kernel_header.code_size, KERNEL_DATA_BASE, kernel_header.data_size);
-    TRACE("\tLoading vdso (%d bytes)", vdso_header.code_size);
+    TRACE("\tLoading vdso %p (%d bytes)", VDSO_CODE_BASE, vdso_header.code_size);
     spiflash_read(0x2000 + vdso_header_offset, VDSO_CODE_BASE, vdso_header.code_size);
+    TRACE("\tLoading data %p (%d bytes)", KERNEL_DATA_BASE, kernel_header.data_size);
+    spiflash_read(0x2000 + kernel_header.code_size, KERNEL_DATA_BASE, kernel_header.data_size);
+
+    // NOTE: from here we can not use the uart device since it uses something we just override
+    //       when we copied the data...
 
     // call the kernel
     kernel_entry_func_t entry = (kernel_entry_func_t)(void*)(uintptr_t)kernel_header.entry_point;
-    TRACE("Calling kernel at %p", entry);
     entry();
-
-    ASSERT(!"Kernel returned?!");
 }
 
 

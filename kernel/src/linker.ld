@@ -57,11 +57,16 @@ SECTIONS {
     } > IRAM
 
     .data : {
-        _data = .;
         *(.rodata .rodata.*)
         *(.data .data.*)
         *(.bss .bss.*)
         *(COMMON)
+
+        /* the heap starts right after the data */
+        . = ALIGN(16);
+        _heap_start = .;
     } > DRAM
 
+    /* calculate the heap size, which is the size left between code and data */
+    _heap_size = 128K - SIZEOF(.text) - SIZEOF(.data);
 }

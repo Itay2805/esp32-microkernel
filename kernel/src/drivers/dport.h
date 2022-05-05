@@ -108,10 +108,6 @@ typedef struct mmu {
 
     // the binding for this space
     struct pid_binding* binding;
-
-    // the amount of bindings that this
-    // space is written to
-    int binding_count;
 } mmu_t;
 
 /**

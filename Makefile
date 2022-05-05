@@ -59,8 +59,3 @@ run: all
 			write_flash \
 			0x1000 \
 			out/image.bin
-	@sudo $(ESPTOOL) \
-			--chip esp32 \
-			--before default_reset \
-			--after hard_reset \
-			run
