@@ -41,10 +41,10 @@ STATIC_ASSERT(sizeof(DPORT_MMU_TABLE_REG) == sizeof(uint32_t));
 extern volatile uint32_t DPORT_PRO_BOOT_REMAP_CTRL;
 extern volatile uint32_t DPORT_APP_BOOT_REMAP_CTRL;
 extern volatile uint32_t DPORT_CACHE_MUX_MODE;
-
 extern volatile DPORT_MMU_TABLE_REG DPORT_IMMU_TABLE[16];
 extern volatile DPORT_MMU_TABLE_REG DPORT_DMMU_TABLE[16];
-
+extern volatile uint32_t DPORT_AHB_MPU_TABLE[2];
+extern volatile uint32_t DPORT_AHBLITE_MPU_TABLE[MPU_LAST];
 extern volatile DPORT_CACHE_CTRL_REG DPORT_PRO_CACHE_CTRL;
 extern volatile DPORT_CACHE_CTRL_REG DPORT_APP_CACHE_CTRL;
 
@@ -86,8 +86,53 @@ void init_dport() {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-// MMU stuff
+// MMU/MPU stuff
 //----------------------------------------------------------------------------------------------------------------------
+
+STATIC_ASSERT(0x32C + MPU_UART * 4 == 0x32C);
+STATIC_ASSERT(0x32C + MPU_SPI1 * 4 == 0x330);
+STATIC_ASSERT(0x32C + MPU_SPI0 * 4 == 0x334);
+STATIC_ASSERT(0x32C + MPU_GPIO * 4 == 0x338);
+STATIC_ASSERT(0x32C + MPU_RTC * 4 == 0x348);
+STATIC_ASSERT(0x32C + MPU_IO_MUX * 4 == 0x34c);
+STATIC_ASSERT(0x32C + MPU_HINF * 4 == 0x354);
+STATIC_ASSERT(0x32C + MPU_UHCI1 * 4 == 0x358);
+STATIC_ASSERT(0x32C + MPU_I2S0 * 4 == 0x364);
+STATIC_ASSERT(0x32C + MPU_UART1 * 4 == 0x368);
+STATIC_ASSERT(0x32C + MPU_I2C_EXT0 * 4 == 0x374);
+STATIC_ASSERT(0x32C + MPU_UHCI0 * 4 == 0x378);
+STATIC_ASSERT(0x32C + MPU_SLCHOST * 4 == 0x37c);
+STATIC_ASSERT(0x32C + MPU_RMT * 4 == 0x380);
+STATIC_ASSERT(0x32C + MPU_PCNT * 4 == 0x384);
+STATIC_ASSERT(0x32C + MPU_SLC * 4 == 0x388);
+STATIC_ASSERT(0x32C + MPU_LEDC * 4 == 0x38c);
+STATIC_ASSERT(0x32C + MPU_EFUSE * 4 == 0x390);
+STATIC_ASSERT(0x32C + MPU_SPI_ENCRYPT * 4 == 0x394);
+STATIC_ASSERT(0x32C + MPU_PWM0 * 4 == 0x39c);
+STATIC_ASSERT(0x32C + MPU_TIMERGROUP * 4 == 0x3a0);
+STATIC_ASSERT(0x32C + MPU_TIMERGROUP1 * 4 == 0x3a4);
+STATIC_ASSERT(0x32C + MPU_SPI2 * 4 == 0x3a8);
+STATIC_ASSERT(0x32C + MPU_SPI3 * 4 == 0x3ac);
+STATIC_ASSERT(0x32C + MPU_APB_CTRL * 4 == 0x3b0);
+STATIC_ASSERT(0x32C + MPU_I2C_EXT1 * 4 == 0x3b4);
+STATIC_ASSERT(0x32C + MPU_SDIO_HOST * 4 == 0x3b8);
+STATIC_ASSERT(0x32C + MPU_EMAC * 4 == 0x3bc);
+STATIC_ASSERT(0x32C + MPU_PWM1 * 4 == 0x3c4);
+STATIC_ASSERT(0x32C + MPU_I2S1 * 4 == 0x3c8);
+STATIC_ASSERT(0x32C + MPU_UART2 * 4 == 0x3cc);
+STATIC_ASSERT(0x32C + MPU_PWR * 4 == 0x3e4);
+
+void init_mmu() {
+    // setup the vdso page, it is always mapped at the last page
+    // of the usermode area, and is available to all the pages
+    DPORT_IMMU_TABLE[15].address = 15;
+    DPORT_IMMU_TABLE[15].access_rights = 1;
+
+    // no DMA is allowed for now
+    for (int i = 0; i < 2; i++) {
+        DPORT_AHB_MPU_TABLE[i] = 0;
+    }
+}
 
 void mmu_activate(mmu_t* space) {
     per_cpu_context_t* context = get_cpu_context();
@@ -116,33 +161,50 @@ void mmu_activate(mmu_t* space) {
 }
 
 void mmu_load(mmu_t* space) {
+    int pid = space->binding->pid;
+
     // go over the mmu entries
     for (int i = 0; i < 16; i++) {
         // set the iram
         if (space->immu.mapped & (1 << i) && !space->immu.entries[i].psram) {
             DPORT_IMMU_TABLE[i].address = space->immu.entries[i].phys;
-            DPORT_IMMU_TABLE[i].access_rights = space->binding->pid;
+            DPORT_IMMU_TABLE[i].access_rights = pid;
         }
 
         // set the dram
         if (space->dmmu.mapped & (1 << i) && !space->dmmu.entries[i].psram) {
             DPORT_DMMU_TABLE[i].address = space->dmmu.entries[i].phys;
-            DPORT_DMMU_TABLE[i].access_rights = space->binding->pid;
+            DPORT_DMMU_TABLE[i].access_rights = pid;
         }
+    }
+
+    // set the peripheral access for the pid
+    FOR_EACH_BIT(space->mpu_peripheral, it) {
+        DPORT_AHBLITE_MPU_TABLE[1 << it] = 1 << pid;
     }
 }
 
 void mmu_unload(mmu_t* space) {
+    int pid = space->binding->pid;
+
     // go over the mmu entries
+    // TODO: do we want to have a mapped check instead maybe?
+    //       I am not sure if it would be faster than just
+    //       reading the access rights instead...
     for (int i = 0; i < 16; i++) {
         // remove anything in dram that has this bit
-        if (DPORT_IMMU_TABLE[i].access_rights == space->binding->pid) {
+        if (DPORT_IMMU_TABLE[i].access_rights == pid) {
             DPORT_IMMU_TABLE[i].access_rights = 0;
         }
 
         // remove anything in iram that has this bit
-        if (DPORT_DMMU_TABLE[i].access_rights == space->binding->pid) {
+        if (DPORT_DMMU_TABLE[i].access_rights == pid) {
             DPORT_DMMU_TABLE[i].access_rights = 0;
         }
+    }
+
+    // remove the peripheral access for the pid
+    FOR_EACH_BIT(space->mpu_peripheral, it) {
+        DPORT_AHBLITE_MPU_TABLE[1 << it] &= ~(1 << pid);
     }
 }

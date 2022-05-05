@@ -8,4 +8,12 @@
 #define _STR(x) #x
 #define STR(x) _STR(x)
 
-typedef char symbol_t[];
+#define FOR_EACH_BIT(num, it) \
+    if (num != 0) \
+        for( \
+            int it = __builtin_ffs(num); \
+            num; \
+            num &= ~it, \
+            it = __builtin_ffs(num) \
+        )
+

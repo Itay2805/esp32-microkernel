@@ -10,6 +10,7 @@ void kmain() {
 
     // start with basic init
     init_dport();
+    init_mmu();
     init_pid();
 
     TRACE("We are done here");
