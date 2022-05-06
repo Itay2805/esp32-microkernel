@@ -8,6 +8,8 @@
 #define _STR(x) #x
 #define STR(x) _STR(x)
 
+typedef char symbol_t[];
+
 #define FOR_EACH_BIT(num, it) \
     if (num != 0) \
         for( \

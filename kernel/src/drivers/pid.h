@@ -32,9 +32,11 @@ typedef struct pid_binding {
 void init_pid();
 
 /**
- * switch to the current pid
+ * prepare for switching to the next pid, the exception exit
+ * will actually do the switching as it can know the correct
+ * delay to use for this
  */
-void pid_switch(int delay);
+void pid_prepare();
 
 /**
  * Checks if this pid binding is the currently bound one

@@ -83,17 +83,19 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:%.o=%.d)
 -include $(DEPS)
 
-vdso/out/bin/kernel.bin:
-	$(MAKE) -C vdso
-
-$(BIN_DIR)/kernel.bin: $(BUILD_DIR)/kernel.elf | vdso/out/bin/kernel.bin
+$(BIN_DIR)/kernel.bin: $(BUILD_DIR)/kernel.elf
 	@mkdir -p $(@D)
-	@echo OBJCOPY $@.text
+	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.text
 	@$(OBJCOPY) -O binary -j .text $^ $(BUILD_DIR)/kernel.bin.text
-	@echo OBJCOPY $@.data
+	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.data
 	@$(OBJCOPY) -O binary -j .data $^ $(BUILD_DIR)/kernel.bin.data
+	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.vdso
+	@$(OBJCOPY) -O binary -j .vdso $^ $(BUILD_DIR)/kernel.bin.vdso
 	@echo CAT $@
-	@cat $(BUILD_DIR)/kernel.bin.text $(BUILD_DIR)/kernel.bin.data vdso/out/bin/vdso.bin > $@
+	@cat \
+		$(BUILD_DIR)/kernel.bin.text \
+		$(BUILD_DIR)/kernel.bin.data \
+		$(BUILD_DIR)/kernel.bin.vdso > $@
 
 $(BUILD_DIR)/kernel.elf: $(OBJS)
 	@echo LD $@
@@ -111,5 +113,4 @@ $(BUILD_DIR)/%.S.o: %.S
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(MAKE) -C vdso clean
 	rm -rf out

@@ -23,15 +23,19 @@
 
 #define __WSR(reg, value) \
     do { \
-        asm volatile ("wsr %0, " STR(reg) :: "a"((uint32_t)value)); \
+        asm volatile ("wsr %0, " STR(reg) :: "r"((uint32_t)value)); \
     } while (0)
 
 #define __RSR(reg) \
     ({\
         uint32_t value; \
-        asm volatile ("rsr %0, " STR(reg) : "=a"(value)); \
+        asm volatile ("rsr %0, " STR(reg) : "=r"(value)); \
         value; \
     })
+
+static inline void __rsync() {
+    asm volatile ("rsync");
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 // Wrappers for special registers
@@ -66,5 +70,7 @@ static inline uint32_t __ccount() {
 }
 
 static inline uint32_t __prid() {
-    return __RSR(PRID);
+    // this is taken from esp-idf
+    //      cpu_ll_get_core_id
+    return __RSR(PRID) >> 13 & 1;
 }

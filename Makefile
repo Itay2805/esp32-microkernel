@@ -25,11 +25,12 @@ fetch-toolchain:
 # Combine everything into a nice image
 #-----------------------------------------------------------------------------------------------------------------------
 
-out/image.bin: kernel/out/bin/kernel.bin loader/out/bin/loader.bin
+out/image.bin: loader kernel
 	@mkdir -p $(@D)
 	rm -rf $@
-	dd if=loader/out/bin/loader.bin of=$@
-	dd if=kernel/out/bin/kernel.bin of=$@ bs=1 seek=4K
+	dd if=loader/out/bin/loader.bin of=$@ bs=1 seek=4k
+	dd if=kernel/out/bin/kernel.bin of=$@ bs=1 seek=8K
+	truncate -s 16M $@
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Wrap our kernel and loader targets
@@ -41,9 +42,6 @@ loader:
 kernel:
 	$(MAKE) -C kernel
 
-kernel/out/bin/kernel.bin: kernel
-loader/out/bin/loader.bin: loader
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Target specific stuff
 #-----------------------------------------------------------------------------------------------------------------------
@@ -51,11 +49,29 @@ loader/out/bin/loader.bin: loader
 TOOLCHAIN_PATH	:= toolchain
 include toolchain/esptool.mk
 
+QEMU			?= /home/tomato/checkouts/esp_qemu/build/qemu-system-xtensa
+
 run: all
 	@sudo $(ESPTOOL) \
 			--chip esp32 \
 			--before default_reset \
 			--after hard_reset \
 			write_flash \
-			0x1000 \
+			0 \
 			out/image.bin
+
+qemu-debug: all
+	 $(QEMU) \
+		-nographic \
+		-machine esp32 \
+		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin,if=mtd,format=raw \
+		-m 4M \
+		-s -S \
+		-d int
+
+qemu: all
+	 $(QEMU) \
+		-nographic \
+		-machine esp32 \
+		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin,if=mtd,format=raw \
+		-m 4M

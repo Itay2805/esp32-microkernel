@@ -17,6 +17,7 @@ ENTRY(_start)
 MEMORY {
     IRAM (RX)       : ORIGIN = 0x400A0000, len = 128K
     DRAM (RW)       : ORIGIN = 0x3FFE0000, len = 128K
+    VDSO_IRAM (RX)  : ORIGIN = 0x4009E000, len = 8K
 }
 
 /**********************************/
@@ -48,6 +49,7 @@ SECTIONS {
         LONG(0x524E4C4B);    /* magic */
         LONG(SIZEOF(.text)); /* code size */
         LONG(SIZEOF(.data)); /* data size */
+        LONG(SIZEOF(.vdso)); /* vdso size */
         LONG(_start);        /* entry pointer */
 
         /* now have the kernel code */
@@ -66,6 +68,10 @@ SECTIONS {
         . = ALIGN(16);
         _heap_start = .;
     } > DRAM
+
+    .vdso : {
+        *(.vdso .vdso.*)
+    } > VDSO_IRAM
 
     /* calculate the heap size, which is the size left between code and data */
     _heap_size = 128K - SIZEOF(.text) - SIZEOF(.data);
