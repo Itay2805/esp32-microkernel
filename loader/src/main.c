@@ -107,6 +107,9 @@ static void disable_watchdogs() {
 void loader_main() {
     disable_watchdogs();
 
+    uint8_t b;
+    while (uart_rx_one_char(&b) != 0) {}
+
     TRACE("Welcome from the loader!");
 
     load_kernel();

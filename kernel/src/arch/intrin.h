@@ -8,19 +8,6 @@
 // Special registers and access to them
 //----------------------------------------------------------------------------------------------------------------------
 
-#define LBEG        0
-#define LEND        1
-#define LCOUNT      2
-
-#define WINDOWBASE  72
-#define WINDOWSTART 73
-
-#define PS          230
-#define VECBASE     231
-
-#define CCOUNT      234
-#define PRID        235
-
 #define __WSR(reg, value) \
     do { \
         asm volatile ("wsr %0, " STR(reg) :: "r"((uint32_t)value)); \
@@ -67,10 +54,4 @@ static inline void __write_ps(ps_t ps) {
 
 static inline uint32_t __ccount() {
     return __RSR(CCOUNT);
-}
-
-static inline uint32_t __prid() {
-    // this is taken from esp-idf
-    //      cpu_ll_get_core_id
-    return __RSR(PRID) >> 13 & 1;
 }

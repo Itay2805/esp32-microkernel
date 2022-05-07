@@ -5,6 +5,9 @@
 #include "arch/intrin.h"
 #include "drivers/pid.h"
 #include "mem/mem.h"
+#include "arch/cpu.h"
+#include "drivers/rtc_cntl.h"
+#include "drivers/timg.h"
 
 /**
  * The stacks for each cpu
@@ -26,18 +29,24 @@ void kmain() {
     TRACE("Hello from kernel!");
 
     // make sure we are running from the pro cpu
-    ASSERT(__prid() == 0);
+    ASSERT(get_cpu_index() == 0);
 
-    // start with basic init
+    // initialize all the basic dport config
     init_dport();
+
+    // init the mmu and pid units for operation
     init_mmu();
     init_pid();
 
+    // initialize the kernel allocator
     CHECK_AND_RETHROW(init_mem());
 
-    TRACE("%d", __read_ps().packed);
+    // enable interrupts
+    __WSR(INTENABLE, 0b111111);
+    __rsync();
 
-    asm ("ill");
+    // setup the scheduler
+    init_wdt();
 
     TRACE("We are done here");
 cleanup:

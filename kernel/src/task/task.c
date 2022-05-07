@@ -93,7 +93,5 @@ task_t* create_task() {
     task->ucontext = umem_alloc_data_page();
     memset(task->ucontext, 0, sizeof(task_ucontext_t));
 
-    // TODO: initialize the uctx
-
     return task;
 }

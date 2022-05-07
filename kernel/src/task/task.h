@@ -60,6 +60,9 @@ typedef struct task_ucontext {
     // the stack for userspace
     char stack[4096];
 
+    // the task name
+    char name[64];
+
     // the registers of this thread, we don't care about storing them in this
     // page instead of the kernel heap because it is going to be saved on every
     // context switch anyways, and it might be a cool way to do exception handling

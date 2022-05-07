@@ -2,6 +2,8 @@
 #include "interrupts.h"
 #include "task/task.h"
 #include "intrin.h"
+#include "cpu.h"
+#include "drivers/timg.h"
 
 void common_exception_entry(void);
 void common_interrupt_entry(void);
@@ -13,37 +15,81 @@ void* g_fast_interrupts[64] = {
 
     // override the entry for syscall
     [SyscallCause] = syscall_entry,
+    [Level1InterruptCause] = common_interrupt_entry,
 };
 
 static const char* m_cause_str[] = {
     [IllegalInstructionCause] = "IllegalInstructionCause",
+    [SyscallCause] = "SyscallCause",
     [InstructionFetchErrorCause] = "InstructionFetchErrorCause",
     [LoadStoreErrorCause] = "LoadStoreErrorCause",
+    [Level1InterruptCause] = "Level1InterruptCause",
+    [AllocaCause] = "AllocaCause",
+    [PrivilegedCause] = "PrivilegedCause",
+    [LoadStoreAlignmentCause] = "LoadStoreAlignmentCause",
     [InstrPIFDataErrorCause] = "InstrPIFDataErrorCause",
     [LoadStorePIFDataErrorCause] = "LoadStorePIFDataErrorCause",
     [InstrPIFAddrErrorCause] = "InstrPIFAddrErrorCause",
     [LoadStorePIFAddrErrorCause] = "LoadStorePIFAddrErrorCause",
+    [InstTLBMissCause] = "InstTLBMissCause",
+    [InstTLBMultiHitCause] = "InstTLBMultiHitCause",
+    [InstFetchPrivilegeCause] = "InstFetchPrivilegeCause",
+    [InstFetchProhibitedCause] = "InstFetchProhibitedCause",
+    [LoadStoreTLBMissCause] = "LoadStoreTLBMissCause",
+    [LoadStoreTLBMultiHitCause] = "LoadStoreTLBMultiHitCause",
+    [LoadStorePrivilegeCause] = "LoadStorePrivilegeCause",
+    [LoadProhibitedCause] = "LoadProhibitedCause",
+    [StoreProhibitedCause] = "StoreProhibitedCause",
+    [Coprocessor0Disabled] = "Coprocessor0Disabled",
+    [Coprocessor1Disabled] = "Coprocessor1Disabled",
+    [Coprocessor2Disabled] = "Coprocessor2Disabled",
+    [Coprocessor3Disabled] = "Coprocessor3Disabled",
+    [Coprocessor4Disabled] = "Coprocessor4Disabled",
+    [Coprocessor5Disabled] = "Coprocessor5Disabled",
+    [Coprocessor6Disabled] = "Coprocessor6Disabled",
+    [Coprocessor7Disabled] = "Coprocessor7Disabled",
+
 };
 
 void common_exception_handler(task_regs_t* regs) {
     int cause = __RSR(EXCCAUSE);
+
+    // print the cuase
+    printf("[-] got exception ");
     if (cause < ARRAY_LEN(m_cause_str) && m_cause_str[cause] != NULL) {
-        TRACE("common_exception_handler(%s):", m_cause_str[cause]);
+        printf("%s (%d)", m_cause_str[cause], cause);
     } else {
-        TRACE("common_exception_handler(%d):", cause);
+        printf("%d", cause);
     }
 
-    task_regs_dump(regs);
+    // print the vaddr if needed
+    if (
+        cause == InstructionFetchErrorCause ||
+        cause == LoadStoreErrorCause ||
+        cause == LoadStoreAlignmentCause ||
+        cause == InstrPIFDataErrorCause ||
+        cause == LoadStorePIFDataErrorCause ||
+        cause == InstrPIFAddrErrorCause ||
+        cause == LoadStorePIFAddrErrorCause ||
+        cause == InstTLBMissCause ||
+        cause == InstTLBMultiHitCause ||
+        cause == InstFetchPrivilegeCause ||
+        cause == InstFetchProhibitedCause ||
+        cause == LoadStoreTLBMissCause ||
+        cause == LoadStoreTLBMultiHitCause ||
+        cause == LoadStorePrivilegeCause ||
+        cause == LoadProhibitedCause ||
+        cause == StoreProhibitedCause
+    ) {
+        printf(" EXCVADDR=%08x", __RSR(EXCVADDR));
+    }
 
-    regs->pc += 3;
+    printf("\n\r");
+
+    // TODO: kill the task that caused the problem
 }
 
 void common_interrupt_handler(task_regs_t* regs) {
-    TRACE("common_interrupt_handler: pc = %x, a0 = %x, ps = %x",
-          regs->pc, regs->ar[0], regs->ps);
-}
-
-void common_syscall_handler(task_regs_t* regs) {
-    TRACE("common_syscall_handler(): pc = %x, a0 = %x, ps = %x",
-          regs->pc, regs->ar[0], regs->ps);
+    // call all the handlers
+    wdt_handle();
 }

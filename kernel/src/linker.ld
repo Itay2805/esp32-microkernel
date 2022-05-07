@@ -31,6 +31,8 @@ INCLUDE syms/io.ld
 /* drivers */
 INCLUDE src/drivers/dport.ld
 INCLUDE src/drivers/pid.ld
+INCLUDE src/drivers/rtc_cntl.ld
+INCLUDE src/drivers/timg.ld
 INCLUDE src/drivers/uart.ld
 
 /**
