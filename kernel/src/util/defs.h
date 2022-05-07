@@ -10,6 +10,20 @@
 
 typedef char symbol_t[];
 
+#define ALIGN_UP(x, align) \
+    ({ \
+        size_t _x = (size_t)(x); \
+        size_t _align = (size_t)(align); \
+        (__typeof(x))((_x + (_align - 1)) & ~(_align - 1)); \
+    })
+
+#define ALIGN_DOWN(x, align) \
+    ({ \
+        size_t _x = (size_t)(x); \
+        size_t _align = (size_t)(align); \
+        (__typeof(x))(_x - (_x & (_align - 1))); \
+    })
+
 #define FOR_EACH_BIT(num, it) \
     if (num != 0) \
         for( \

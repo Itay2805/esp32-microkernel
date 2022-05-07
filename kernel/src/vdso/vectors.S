@@ -194,6 +194,7 @@ user_exception:
     rsr.excsave1 a0
     s32i a0, sp, TASK_REGS_AR(1)
     s32i a2, sp, TASK_REGS_AR(2)
+    s32i a3, sp, TASK_REGS_AR(3)
 
     #
     # we are going to start by loading a fast handler, which

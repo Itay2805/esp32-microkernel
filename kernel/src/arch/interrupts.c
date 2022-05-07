@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "interrupts.h"
 #include "task/task.h"
 #include "intrin.h"
@@ -27,12 +28,12 @@ static const char* m_cause_str[] = {
 void common_exception_handler(task_regs_t* regs) {
     int cause = __RSR(EXCCAUSE);
     if (cause < ARRAY_LEN(m_cause_str) && m_cause_str[cause] != NULL) {
-        TRACE("common_exception_handler(%s): pc = %x, a0 = %x, ps = %x",
-              m_cause_str[cause], regs->pc, regs->ar[0], regs->ps);
+        TRACE("common_exception_handler(%s):", m_cause_str[cause]);
     } else {
-        TRACE("common_exception_handler(%d): pc = %x, a0 = %x, ps = %x",
-              cause, regs->pc, regs->ar[0], regs->ps);
+        TRACE("common_exception_handler(%d):", cause);
     }
+
+    task_regs_dump(regs);
 
     regs->pc += 3;
 }

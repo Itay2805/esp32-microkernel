@@ -30,7 +30,8 @@ out/image.bin: loader kernel
 	rm -rf $@
 	dd if=loader/out/bin/loader.bin of=$@ bs=1 seek=4k
 	dd if=kernel/out/bin/kernel.bin of=$@ bs=1 seek=8K
-	truncate -s 16M $@
+	cp $@ $@.full
+	truncate -s 16M $@.full
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Wrap our kernel and loader targets
@@ -62,16 +63,18 @@ run: all
 
 qemu-debug: all
 	 $(QEMU) \
-		-nographic \
 		-machine esp32 \
-		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin,if=mtd,format=raw \
+		-serial stdio \
+		-monitor telnet:localhost:1235,server,nowait \
+		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin.full,if=mtd,format=raw \
 		-m 4M \
 		-s -S \
 		-d int
 
 qemu: all
 	 $(QEMU) \
-		-nographic \
 		-machine esp32 \
-		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin,if=mtd,format=raw \
+		-serial stdio \
+		-monitor telnet:localhost:1235,server,nowait \
+		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin.full,if=mtd,format=raw \
 		-m 4M
