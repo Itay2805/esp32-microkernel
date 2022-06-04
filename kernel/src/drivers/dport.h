@@ -3,11 +3,54 @@
 #include <util/defs.h>
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "util/except.h"
+
+#define RTC_SLOW_FREZ_HZ 150000
+#define XTAL_FREQ_HZ 40000000
+#define APB_FREQ_HZ 40000000
 
 /**
  * Initialize the dport for kernel runtime
  */
 void init_dport();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Interrupt abstraction
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef enum interrupt_source {
+    INT_INVALID = -1,
+
+    INT_TG_T0_LEVEL = 14,
+    INT_TG_T1_LEVEL = 15,
+    INT_TG_WDT_LEVEL = 16,
+    INT_TG_LACT_LEVEL = 17,
+    INT_TG1_T0_LEVEL = 18,
+    INT_TG1_T1_LEVEL = 19,
+    INT_TG1_WDT_LEVEL = 20,
+    INT_TG1_LACT_LEVEL = 21,
+    GPIO_INTERRUPT = 22,
+    GPIO_INTERRUPT_NMI = 23,
+    // ...
+    INT_I2C_EXT0 = 49,
+    INT_I2C_EXT1 = 50,
+    // ...
+    INT_MMU_IA = 66,
+    INT_MPU_IA = 67,
+    INT_CACHE_IA = 68,
+} interrupt_source_t;
+
+/**
+ * Map an interrupt, getting back the interrupt number
+ *
+ * @remark
+ * Always allocates to the PRO cpu
+ *
+ * @param source            [IN]    The interrupt source
+ * @param edge_triggered    [IN]    Should this be an edge-triggered interrupt, otherwise level interrupt
+ */
+err_t dport_map_interrupt(interrupt_source_t source, bool edge_triggered);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MMU/MPU abstraction

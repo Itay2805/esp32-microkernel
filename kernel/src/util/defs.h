@@ -3,6 +3,7 @@
 #define ARRAY_LEN(x) (sizeof(x) / sizeof(x[0]))
 
 #define PACKED __attribute__((packed))
+#define MMIO __attribute__((packed, aligned(4)))
 #define STATIC_ASSERT(x) _Static_assert(x, #x)
 
 #define _STR(x) #x

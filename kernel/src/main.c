@@ -41,12 +41,29 @@ void kmain() {
     // initialize the kernel allocator
     CHECK_AND_RETHROW(init_mem());
 
-    // enable interrupts
-    __WSR(INTENABLE, 0b111111);
+    // set the cpu state properly
+    //  - normal operation
+    //  - interrupts enabled
+    //  - usermode
+    //  - window exception enabled
+    ps_t ps = __read_ps();
+    ps.excm = 0;
+    ps.intlevel = 0;
+    ps.um = 1;
+    ps.woe = 1;
+    __write_ps(ps);
+
+    // enable all interrupt levels
+    __WSR(INTENABLE, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5 | BIT6);
+
+    // clear all pending interrupts
+    __WSR(INTCLEAR, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5 | BIT6);
+
+    // sync all these configurations
     __rsync();
 
     // setup the scheduler
-    init_wdt();
+    CHECK_AND_RETHROW(init_wdt());
 
     TRACE("We are done here");
 cleanup:

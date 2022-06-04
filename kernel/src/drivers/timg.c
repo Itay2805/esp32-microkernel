@@ -1,5 +1,7 @@
 #include "timg.h"
 #include "util/trace.h"
+#include "util/except.h"
+#include "dport.h"
 
 #include <util/defs.h>
 
@@ -21,7 +23,7 @@ typedef union _TIMG_CONFIG_REG {
         uint32_t en : 1;
     };
     uint32_t packed;
-} PACKED TIMG_CONFIG_REG;
+} MMIO TIMG_CONFIG_REG;
 STATIC_ASSERT(sizeof(TIMG_CONFIG_REG) == sizeof(uint32_t));
 
 typedef struct _TIMG_REG {
@@ -34,7 +36,7 @@ typedef struct _TIMG_REG {
     uint32_t loadlo;
     uint32_t loadhi;
     uint32_t load;
-} PACKED TIMG_REG;
+} MMIO TIMG_REG;
 STATIC_ASSERT(sizeof(TIMG_REG) == 0x24);
 
 typedef union _TIMG_WDTCONFIG_REG {
@@ -52,7 +54,7 @@ typedef union _TIMG_WDTCONFIG_REG {
         uint32_t en : 1;
     };
     uint32_t packed;
-} PACKED TIMG_WDTCONFIG_REG;
+} MMIO TIMG_WDTCONFIG_REG;
 STATIC_ASSERT(sizeof(TIMG_WDTCONFIG_REG) == sizeof(uint32_t));
 
 typedef union _TIMG_INT_REG {
@@ -63,7 +65,7 @@ typedef union _TIMG_INT_REG {
         uint32_t _reserved : 29;
     };
     uint32_t packed;
-} PACKED TIMG_INT_REG;
+} MMIO TIMG_INT_REG;
 STATIC_ASSERT(sizeof(TIMG_INT_REG) == sizeof(uint32_t));
 
 /* Timer group 0 */
@@ -88,15 +90,15 @@ extern volatile TIMG_INT_REG TIMG0_INT_CLR;
 // Implementation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
- * The amount of ticks per ms assuming the
- * default 32khz clock
- */
-#define TICKS_PER_MS 32
+__attribute__((noinline))
+err_t init_wdt() {
+    err_t err = NO_ERROR;
 
-void init_wdt() {
+    // allocate an interrupt for the watchdog
+    CHECK_AND_RETHROW(dport_map_interrupt(INT_TG_WDT_LEVEL, false));
+
     // for pro cpu
-    TIMG0_WDTCONFIG = (TIMG_WDTCONFIG_REG) {
+    TIMG_WDTCONFIG_REG wdtconfig = {
         // do it as long as it is needed
         .level_int_en = 1,
 
@@ -105,15 +107,23 @@ void init_wdt() {
         .stg0 = 1,
 
         // we are going to give a small timeout until
-        // we reset the CPU if we have a problem
-        .stg1 = 2,
+        // we reset the System if we have a problem
+        .stg1 = 3,
     };
+    TIMG0_WDTCONFIG = wdtconfig;
+
+    // set the prescaler to 40000 * 12.5ns == 0.5ms, which means we have
+    // two ticks per ms, so we just need to multiply the ms by 2
+    TIMG0_WDTCONFIG1 = 40000 << 16;
 
     // 10 ms for the first clock
-    TIMG0_WDTCONFIG2 = 1; //TICKS_PER_MS * 1000;
+    TIMG0_WDTCONFIG2 = 10;
 
-    // 1ms for the second clock
-    TIMG0_WDTCONFIG3 = 1; //TICKS_PER_MS * 1;
+    // 10ms for the second clock
+    TIMG0_WDTCONFIG3 = 10;
+
+    // enable it
+    TIMG0_WDTCONFIG.en = 1;
 
     // protect the counter
     TIMG0_WDTWPROTECT = 0xDEADBEEF;
@@ -124,8 +134,20 @@ void init_wdt() {
     // clear it
     TIMG0_INT_CLR.wdt_int = 1;
 
-    // enable it
+cleanup:
+    return err;
+}
+
+void wdt_enable() {
+    TIMG0_WDTWPROTECT = 0x050D83AA1;
     TIMG0_WDTCONFIG.en = 1;
+    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+}
+
+void wdt_disable() {
+    TIMG0_WDTWPROTECT = 0x050D83AA1;
+    TIMG0_WDTCONFIG.en = 0;
+    TIMG0_WDTWPROTECT = 0xDEADBEEF;
 }
 
 static void wdt_feed() {
@@ -139,10 +161,10 @@ static void wdt_feed() {
     TIMG0_WDTWPROTECT = 0xDEADBEEF;
 }
 
-void wdt_handle() {
+bool wdt_handle() {
     // check if we care
     if (!TIMG0_INT_ST.wdt_int)
-        return;
+        return false;
 
     // feed the watchdog
     wdt_feed();
@@ -150,7 +172,5 @@ void wdt_handle() {
     // clear the interrupts
     TIMG0_INT_CLR.wdt_int = 1;
 
-    TRACE("Got WatchDog timeout!");
-
-    // TODO: call the scheduler
+    return true;
 }

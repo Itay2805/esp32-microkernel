@@ -32,11 +32,11 @@ vecbase:
  * to be saved are a0-a3; a4-a15 must be preserved a5 is call[j+1]’s
  * stack pointer
  */
-    s32e	a0, a5, -16     # save a0 to call[j+1]’s frame
-    s32e	a1, a5, -12     # save a1 to call[j+1]’s frame
-    s32e	a2, a5,  -8     # save a2 to call[j+1]’s frame
-    s32e	a3, a5,  -4     # save a3 to call[j+1]’s frame
-    rfwo                    # rotates back to call[i] position
+    s32e	a0, a5, -16     // save a0 to call[j+1]’s frame
+    s32e	a1, a5, -12     // save a1 to call[j+1]’s frame
+    s32e	a2, a5,  -8     // save a2 to call[j+1]’s frame
+    s32e	a3, a5,  -4     // save a3 to call[j+1]’s frame
+    rfwo                    // rotates back to call[i] position
 
 .align 64
 /*
@@ -47,10 +47,10 @@ vecbase:
  * contain garbage. a4-a15 are call[i+1].reg[0..11], (in particular, a5 is call[i+1]’s
  * stack pointer) and must be preserved
  */
-    l32e	a0, a5, -16     # restore a0 from call[i+1]’s frame
-    l32e	a1, a5, -12     # restore a1 from call[i+1]’s frame
-    l32e	a2, a5,  -8     # restore a2 from call[i+1]’s frame
-    l32e	a3, a5,  -4     # restore a3 from call[i+1]’s frame
+    l32e	a0, a5, -16     // restore a0 from call[i+1]’s frame
+    l32e	a1, a5, -12     // restore a1 from call[i+1]’s frame
+    l32e	a2, a5,  -8     // restore a2 from call[i+1]’s frame
+    l32e	a3, a5,  -4     // restore a3 from call[i+1]’s frame
     rfwu
 
 # TODO: add comments to the rest
@@ -169,26 +169,26 @@ vecbase:
 .type  user_exception,@function
 .align 64
 user_exception:
-    # save the original a0 and a1 in two scratch
-    # registers, specifically a1 and a0
+    // save the original a0 and a1 in two scratch
+    // registers, specifically a1 and a0
     wsr.excsave1 a1
     wsr.depc a0
 
-    # load the kernel stack, we first take
-    # the prid of the current cpu, then we
-    # are going to access a pointer array
-    # and load the stack from it.
+    // load the kernel stack, we first take
+    // the prid of the current cpu, then we
+    // are going to access a pointer array
+    // and load the stack from it.
     rsr.prid a1
     extui a1, a1, 13, 1
     movi a0, g_kernel_stacks
     addx4 a1, a1, a0
     l32i sp, a1, 0
 
-    # allocate the task_regs_t for the current exception
+    // allocate the task_regs_t for the current exception
     addi sp, sp, -TASK_REGS_SIZE
 
-    # now save the original a0-a2, we need
-    # them to do stuff
+    // now save the original a0-a2, we need
+    // them to do stuff
     rsr.depc a0
     s32i a0, sp, TASK_REGS_AR(0)
     rsr.excsave1 a0
@@ -196,21 +196,21 @@ user_exception:
     s32i a2, sp, TASK_REGS_AR(2)
     s32i a3, sp, TASK_REGS_AR(3)
 
-    #
-    # we are going to start by loading a fast handler, which
-    # could also be a common slow handler, the idea is that
-    # the fast handler can take a quick path of handling some
-    # of the exception causes.
-    #
-    # it is safe to use exccause as index since it is only 6 bits
-    # meaning that we only haev a max of 64 entries
-    #
+    //
+    // we are going to start by loading a fast handler, which
+    // could also be a common slow handler, the idea is that
+    // the fast handler can take a quick path of handling some
+    // of the exception causes.
+    //
+    // it is safe to use exccause as index since it is only 6 bits
+    // meaning that we only haev a max of 64 entries
+    //
     rsr.exccause a0
     movi a2, g_fast_interrupts
     addx4 a0, a0, a2
     l32i a0, a0, 0
 
-    # jump to it
+    // jump to it
     jx a0
 .size user_exception, . - user_exception
 

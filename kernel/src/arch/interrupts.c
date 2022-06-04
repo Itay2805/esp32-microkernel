@@ -4,6 +4,7 @@
 #include "intrin.h"
 #include "cpu.h"
 #include "drivers/timg.h"
+#include "task/scheduler.h"
 
 void common_exception_entry(void);
 void common_interrupt_entry(void);
@@ -25,6 +26,7 @@ static const char* m_cause_str[] = {
     [LoadStoreErrorCause] = "LoadStoreErrorCause",
     [Level1InterruptCause] = "Level1InterruptCause",
     [AllocaCause] = "AllocaCause",
+    [IntegerDivideByZero] = "IntegerDivideByZero",
     [PrivilegedCause] = "PrivilegedCause",
     [LoadStoreAlignmentCause] = "LoadStoreAlignmentCause",
     [InstrPIFDataErrorCause] = "InstrPIFDataErrorCause",
@@ -90,6 +92,28 @@ void common_exception_handler(task_regs_t* regs) {
 }
 
 void common_interrupt_handler(task_regs_t* regs) {
-    // call all the handlers
-    wdt_handle();
+    // special case for scheduler
+    if (wdt_handle()) {
+        // save the current task context
+        task_t* task = get_current_task();
+        if (task != NULL) {
+            task->ucontext->regs = *regs;
+        }
+
+        // we got a watchdog, do schedule as well
+        scheduler_next();
+
+        // restore the registers task
+        task = get_current_task();
+        if (task != NULL) {
+            *regs = task->ucontext->regs;
+        } else {
+            // there is nothing to run, enter sleep
+            wdt_disable();
+            asm volatile ("WAITI 0");
+            wdt_enable();
+        }
+    } else {
+        TRACE("Got unknown interrupt");
+    }
 }

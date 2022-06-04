@@ -11,28 +11,32 @@ typedef enum exception_cause {
     LoadStoreErrorCause         = 3,
     Level1InterruptCause        = 4,
     AllocaCause                 = 5,
-
+    IntegerDivideByZero         = 6,
+    //                          = 7,
     PrivilegedCause             = 8,
     LoadStoreAlignmentCause     = 9,
-
+    //                          = 10,
+    //                          = 11,
     InstrPIFDataErrorCause      = 12,
     LoadStorePIFDataErrorCause  = 13,
     InstrPIFAddrErrorCause      = 14,
     LoadStorePIFAddrErrorCause  = 15,
-
     InstTLBMissCause            = 16,
     InstTLBMultiHitCause        = 17,
     InstFetchPrivilegeCause     = 18,
-
+    //                          = 19,
     InstFetchProhibitedCause    = 20,
-
+    //                          = 21,
+    //                          = 22,
+    //                          = 23,
     LoadStoreTLBMissCause       = 24,
     LoadStoreTLBMultiHitCause   = 25,
     LoadStorePrivilegeCause     = 26,
-
+    //                          = 27,
     LoadProhibitedCause         = 28,
     StoreProhibitedCause        = 29,
-
+    //                          = 30,
+    //                          = 31,
     Coprocessor0Disabled        = 32,
     Coprocessor1Disabled        = 33,
     Coprocessor2Disabled        = 34,

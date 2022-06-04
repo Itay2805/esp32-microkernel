@@ -66,7 +66,7 @@ qemu-debug: all
 		-machine esp32 \
 		-serial stdio \
 		-monitor telnet:localhost:1235,server,nowait \
-		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin.full,if=mtd,format=raw \
+		-drive file=out/image.bin.full,if=mtd,format=raw \
 		-m 4M \
 		-s -S \
 		-d int
@@ -75,7 +75,6 @@ qemu: all
 	 $(QEMU) \
 		-machine esp32 \
 		-serial stdio \
-		-d unimp,guest_errors \
 		-monitor telnet:localhost:1235,server,nowait \
-		-drive file=/home/tomato/projects/osdev/watch-micro-kernel/out/image.bin.full,if=mtd,format=raw \
+		-drive file=out/image.bin.full,if=mtd,format=raw \
 		-m 4M

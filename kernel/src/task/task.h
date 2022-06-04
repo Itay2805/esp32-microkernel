@@ -74,6 +74,8 @@ STATIC_ASSERT(sizeof(task_ucontext_t) <= USER_PAGE_SIZE);
  * The task struct, used to represent a single task
  */
 typedef struct task {
+    // TODO: link
+
     // the actual pid of the process
     pid_t pid;
 

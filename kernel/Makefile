@@ -32,6 +32,9 @@ CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
 # Freestanding, static and short wchar_t (instead of int)
 CFLAGS		+= -ffreestanding -static -fshort-wchar
 
+# Make GCC play nicely with volatile
+CFLAGS 		+= -fstrict-volatile-bitfields
+
 # No stdlib
 CFLAGS		+= -nostdlib
 

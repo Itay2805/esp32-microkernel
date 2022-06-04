@@ -38,15 +38,34 @@ typedef union _DPORT_MMU_TABLE_REG {
 } PACKED DPORT_MMU_TABLE_REG;
 STATIC_ASSERT(sizeof(DPORT_MMU_TABLE_REG) == sizeof(uint32_t));
 
+// System and memory registers
 extern volatile uint32_t DPORT_PRO_BOOT_REMAP_CTRL;
 extern volatile uint32_t DPORT_APP_BOOT_REMAP_CTRL;
 extern volatile uint32_t DPORT_CACHE_MUX_MODE;
-extern volatile DPORT_MMU_TABLE_REG DPORT_IMMU_TABLE[16];
-extern volatile DPORT_MMU_TABLE_REG DPORT_DMMU_TABLE[16];
-extern volatile uint32_t DPORT_AHB_MPU_TABLE[2];
-extern volatile uint32_t DPORT_AHBLITE_MPU_TABLE[MPU_LAST];
+
+// Reset and clock registers
+
+// Interrupt matrix registers
+extern volatile uint32_t DPORT_INTR_FROM_CPU[4];
+extern volatile uint32_t DPORT_PRO_INTR_STATUS[3];
+extern volatile uint32_t DPORT_APP_INTR_STATUS[3];
+extern volatile uint32_t DPORT_PRO_INT_MAP[69];
+extern volatile uint32_t DPORT_APP_INT_MAP[69];
+
+// DMA registers
+
+// MPU/MMU registers
 extern volatile DPORT_CACHE_CTRL_REG DPORT_PRO_CACHE_CTRL;
 extern volatile DPORT_CACHE_CTRL_REG DPORT_APP_CACHE_CTRL;
+
+extern volatile uint32_t DPORT_AHB_MPU_TABLE[2];
+extern volatile uint32_t DPORT_AHBLITE_MPU_TABLE[MPU_LAST];
+extern volatile DPORT_MMU_TABLE_REG DPORT_IMMU_TABLE[16];
+extern volatile DPORT_MMU_TABLE_REG DPORT_DMMU_TABLE[16];
+
+// APP_CPU controller registers
+
+// Peripheral clock gating and reset registers
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation
@@ -83,6 +102,52 @@ void init_dport() {
     // now enable the cache
     DPORT_PRO_CACHE_CTRL.cache_enable = 1;
     DPORT_APP_CACHE_CTRL.cache_enable = 1;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+// Interrupt matrix stuff
+//----------------------------------------------------------------------------------------------------------------------
+
+/**
+ * All the edge-triggered interrupts
+ */
+#define PERIPHERALS_EDGE_TRIGGERED (BIT10 | BIT22 | BIT28 | BIT30)
+
+/**
+ * Free peripheral interrupts (both edge and level) that are
+ * only priority level 1
+ */
+uint32_t m_free_peripheral_interrupt =
+        BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5 | BIT8 |
+        BIT9 | BIT10 | BIT12 | BIT13 | BIT17 | BIT18;
+
+err_t dport_map_interrupt(interrupt_source_t source, bool edge_triggered) {
+    err_t err = NO_ERROR;
+
+    // check that source is in a valid range
+    CHECK(source >= 0);
+    CHECK(source <= 68);
+
+    // mask properly and make sure there are enough of these
+    uint32_t free_peripheral_interrupt = m_free_peripheral_interrupt;
+    if (edge_triggered) {
+        free_peripheral_interrupt &= PERIPHERALS_EDGE_TRIGGERED;
+    } else {
+        free_peripheral_interrupt &= ~PERIPHERALS_EDGE_TRIGGERED;
+    }
+    CHECK_ERROR(free_peripheral_interrupt != 0, ERROR_OUT_OF_RESOURCES);
+
+    // allocate the first available one
+    uint32_t free = __builtin_ffs(free_peripheral_interrupt) - 1;
+    m_free_peripheral_interrupt &= ~(1 << free);
+
+    TRACE("Mapping %d -> %d", source, free);
+
+    // map it properly
+    DPORT_PRO_INT_MAP[source] = free;
+
+cleanup:
+    return err;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

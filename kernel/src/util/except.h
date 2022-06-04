@@ -13,6 +13,11 @@ typedef enum err {
      * Generic unknown error
      */
     ERROR_CHECK_FAILED,
+
+    /**
+     * Could not allocate the requested resource
+     */
+    ERROR_OUT_OF_RESOURCES,
 } err_t;
 
 #define IS_ERROR(x) ((x) != 0)
