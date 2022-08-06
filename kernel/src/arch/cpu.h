@@ -8,6 +8,10 @@
 #define CPU_COUNT 2
 
 typedef struct per_cpu_context {
+    //------------------------------
+    // For PID management
+    //------------------------------
+
     // Timestamp for LRU of pids
     uint64_t next_stamp;
 
@@ -17,6 +21,14 @@ typedef struct per_cpu_context {
     // currently active pid
     pid_binding_t* primary_binding;
 
+    //------------------------------
+    // For scheduler
+    //------------------------------
+
+    // how many disables we had
+    int preempt_disable_depth;
+
+    // the currently running task
     task_t* current_task;
 } per_cpu_context_t;
 

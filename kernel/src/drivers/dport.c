@@ -237,21 +237,45 @@ void mmu_activate(mmu_t* space) {
     pid_binding_bind(&context->pid_bindings[lru_pid], space);
 }
 
+err_t mmu_map_code(mmu_t* mmu, mmu_space_type_t type, uint8_t virt, mmu_space_entry_t entry) {
+    err_t err = NO_ERROR;
+    int bit = (1 << virt);
+
+    CHECK(virt < MAX_PAGE_COUNT);
+
+    // map it
+    mmu_space_t* space = type == MMU_SPACE_INST ? &mmu->immu : &mmu->dmmu;
+    space->entries[virt] = entry;
+    space->mapped |= bit;
+
+    // if the process is running, update the mmu itself
+    if (!entry.psram && pid_binding_is_primary(mmu->binding)) {
+        volatile DPORT_MMU_TABLE_REG* table_reg = &DPORT_IMMU_TABLE[entry.phys];
+        table_reg->address = virt;
+        table_reg->access_rights = mmu->binding->pid;
+    }
+
+cleanup:
+    return err;
+}
+
 void mmu_load(mmu_t* space) {
     int pid = space->binding->pid;
 
     // go over the mmu entries
-    for (int i = 0; i < 16; i++) {
+    for (int virt = 0; virt < 16; virt++) {
         // set the iram
-        if (space->immu.mapped & (1 << i) && !space->immu.entries[i].psram) {
-            DPORT_IMMU_TABLE[i].address = space->immu.entries[i].phys;
-            DPORT_IMMU_TABLE[i].access_rights = pid;
+        if (space->immu.mapped & (1 << virt) && !space->immu.entries[virt].psram) {
+            uint8_t phys = space->immu.entries[virt].phys;
+            DPORT_IMMU_TABLE[phys].address = virt;
+            DPORT_IMMU_TABLE[phys].access_rights = pid;
         }
 
         // set the dram
-        if (space->dmmu.mapped & (1 << i) && !space->dmmu.entries[i].psram) {
-            DPORT_DMMU_TABLE[i].address = space->dmmu.entries[i].phys;
-            DPORT_DMMU_TABLE[i].access_rights = pid;
+        if (space->dmmu.mapped & (1 << virt) && !space->dmmu.entries[virt].psram) {
+            uint8_t phys = space->dmmu.entries[virt].phys;
+            DPORT_DMMU_TABLE[phys].address = virt;
+            DPORT_DMMU_TABLE[phys].access_rights = pid;
         }
     }
 

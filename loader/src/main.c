@@ -11,10 +11,10 @@
 #define _STR(x) #x
 #define STR(x) _STR(x)
 
-#define ASSERT(...) \
-    if (!(__VA_ARGS__)) { \
-        ERROR("Assertion failed: %s, file %s, line %d", #__VA_ARGS__, __FILE__, __LINE__); \
-        while(1); \
+#define ASSERT(check) \
+    if (!(check)) { \
+           ERROR("Assert `%s` failed at %s (%s:%d)", #check, __FUNCTION__, __FILE__, __LINE__); \
+           while(1); \
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

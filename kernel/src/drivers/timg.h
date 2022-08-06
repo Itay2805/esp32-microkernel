@@ -20,6 +20,11 @@ void wdt_enable();
 void wdt_disable();
 
 /**
+ * Feed watchdog
+ */
+void wdt_feed();
+
+/**
  * Handle a watchdog interrupt
  */
 bool wdt_handle();

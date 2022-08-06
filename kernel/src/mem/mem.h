@@ -1,8 +1,9 @@
 #pragma once
 
+#include <util/except.h>
 #include <util/defs.h>
+
 #include <stddef.h>
-#include "util/except.h"
 
 #define USER_CODE_BASE      ((void*)0x3FFC0000)
 #define USER_DATA_BASE      ((void*)0x40080000)

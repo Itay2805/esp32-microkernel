@@ -169,6 +169,20 @@ typedef struct mmu {
 void init_mmu();
 
 /**
+ * The page for the code pages index
+ */
+#define MAX_PAGE_COUNT  16
+
+typedef enum mmu_space_type {
+    MMU_SPACE_INST,
+    MMU_SPACE_DATA,
+} mmu_space_type_t;
+
+#define MMU_SPACE_ENTRY(page) ((mmu_space_entry_t){ .phys = (page) })
+
+err_t mmu_map_code(mmu_t* mmu, mmu_space_type_t type, uint8_t virt, mmu_space_entry_t entry);
+
+/**
  * Activate the given MMU range
  */
 void mmu_activate(mmu_t* space);

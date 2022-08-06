@@ -20,4 +20,24 @@
 // Syscalls
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: what kind of syscalls do I want
+typedef enum syscall {
+    //
+    // ABI syscalls
+    //
+    SYSCALL_SPILL           = 0x00,
+    SYSCALL_XTENSA          = 0x01,
+    // 0x02
+    // 0x03
+    // 0x04
+    // 0x05
+    // 0x06
+    // 0x07
+
+    //
+    // kernel only
+    //
+
+    SYSCALL_PARK            = 0x08,
+    SYSCALL_YIELD           = 0x09,
+    SYSCALL_DROP            = 0x0a,
+} syscall_t;

@@ -159,7 +159,7 @@ void wdt_disable() {
     wdt_lock();
 }
 
-static void wdt_feed() {
+void wdt_feed() {
     wdt_unlock();
     TIMG0_WDTFEED = 1;
     wdt_lock();

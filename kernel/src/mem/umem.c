@@ -17,10 +17,10 @@ static uint16_t m_code_pages = 0x7fff;
  */
 static uint16_t m_data_pages = 0xFFFF;
 
-void* umem_alloc_code_page() {
+int umem_alloc_code_page() {
     // nothing to allocate
     if (m_code_pages == 0) {
-        return NULL;
+        return INVALID_PAGE;
     }
 
     // find a free page
@@ -28,13 +28,13 @@ void* umem_alloc_code_page() {
     m_code_pages &= ~(1 << index);
 
     // return it as a pointer
-    return USER_CODE_BASE + (index * USER_PAGE_SIZE);
+    return index;
 }
 
-void* umem_alloc_data_page() {
+int umem_alloc_data_page() {
     // nothing to allocate
     if (m_data_pages == 0) {
-        return NULL;
+        return INVALID_PAGE;
     }
 
     // find a free page
@@ -42,16 +42,14 @@ void* umem_alloc_data_page() {
     m_data_pages &= ~(1 << index);
 
     // return it as a pointer
-    return USER_DATA_BASE + (index * USER_PAGE_SIZE);
+    return index;
 }
 
-void umem_free_code_page(void* ptr) {
+void umem_free_code_page(int index) {
     // TODO: verify the pointers
-    int index = (ptr - USER_CODE_BASE) / USER_PAGE_SIZE;
     m_code_pages |= 1 << index;
 }
 
-void umem_free_data_page(void* ptr) {
-    int index = (ptr - USER_DATA_BASE) / USER_PAGE_SIZE;
+void umem_free_data_page(int index) {
     m_data_pages |= 1 << index;
 }

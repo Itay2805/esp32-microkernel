@@ -22,6 +22,7 @@ CFLAGS		:= -Werror -std=gnu11
 CFLAGS 		+= -Wno-unused-label
 CFLAGS 		+= -Wno-address-of-packed-member
 CFLAGS 		+= -Wno-psabi
+CFLAGS 		+= -Wno-stringop-overflow
 
 # Size optimization, include debug info
 CFLAGS 		+= -Os -g3

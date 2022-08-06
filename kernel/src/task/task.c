@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdatomic.h>
 
 typedef struct reg_offset {
     const char* name;
@@ -90,8 +91,56 @@ task_t* create_task() {
     task->pid = m_pid_gen++;
 
     // allocate the uctx
-    task->ucontext = umem_alloc_data_page();
+    int uctx_page = umem_alloc_data_page();
+    mmu_map_code(&task->mmu, MMU_SPACE_DATA, 15, MMU_SPACE_ENTRY(uctx_page));
+
+    task->ucontext = DATA_PAGE_ADDR(uctx_page);
     memset(task->ucontext, 0, sizeof(task_ucontext_t));
 
+    // setup the user context
+    task->ucontext->regs.ps = (ps_t){
+        .excm = 0,
+        .intlevel = 0,
+        .um = 1,
+        .woe = 1
+    };
+
     return task;
+}
+
+void release_task(task_t* task) {
+    ASSERT(!"TODO: release_task");
+}
+
+task_status_t get_task_status(task_t* thread) {
+    return atomic_load(&thread->status);
+}
+
+void cas_task_state(task_t* task, task_status_t old, task_status_t new) {
+    // sanity
+    ASSERT((old & TASK_SUSPEND) == 0);
+    ASSERT((new & TASK_SUSPEND) == 0);
+    ASSERT(old != new);
+
+    // loop if status is in a suspend state giving the GC
+    // time to finish and change the state to old val
+    task_status_t old_value = old;
+    for (int i = 0; !atomic_compare_exchange_weak(&task->status, &old_value, new); i++, old_value = old) {
+        if (old == TASK_STATUS_WAITING && task->status == TASK_STATUS_RUNNABLE) {
+            ASSERT(!"Waiting for TASK_STATUS_WAITING but is TASK_STATUS_RUNNABLE");
+        }
+
+        // pause for max of 10 times polling for status
+        for (int x = 0; x < 10 && task->status != old; x++) {
+            asm("":::"memory");
+        }
+    }
+}
+
+void save_task_context(task_t* task, task_regs_t* regs) {
+    task->ucontext->regs = *regs;
+}
+
+void restore_task_context(task_t* task, task_regs_t* regs) {
+    *regs = task->ucontext->regs;
 }

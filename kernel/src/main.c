@@ -9,6 +9,7 @@
 #include "drivers/rtc_cntl.h"
 #include "drivers/timg.h"
 #include "drivers/uart.h"
+#include "task/scheduler.h"
 
 /**
  * The stacks for each cpu
@@ -67,6 +68,9 @@ void kmain() {
 
     // setup the scheduler
     CHECK_AND_RETHROW(init_wdt());
+
+    // drop everything and startup the scheduler
+    scheduler_drop_current();
 
     TRACE("We are done here");
 cleanup:

@@ -95,26 +95,7 @@ void common_interrupt_handler(task_regs_t* regs) {
     // special case for scheduler
     if (wdt_handle()) {
         TRACE("GOT WATCHDOG INTERRUPT");
-
-        // save the current task context
-        task_t* task = get_current_task();
-        if (task != NULL) {
-            task->ucontext->regs = *regs;
-        }
-
-        // we got a watchdog, do schedule as well
-        scheduler_next();
-
-        // restore the registers task
-        task = get_current_task();
-        if (task != NULL) {
-            *regs = task->ucontext->regs;
-        } else {
-            // there is nothing to run, enter sleep
-            wdt_disable();
-            asm volatile ("WAITI 0");
-            wdt_enable();
-        }
+        scheduler_on_schedule(regs);
     } else {
         TRACE("Got unknown interrupt");
     }

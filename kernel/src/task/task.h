@@ -14,6 +14,55 @@
  */
 typedef int8_t pid_t;
 
+typedef enum task_status {
+    /**
+     * Means this thread was just allocated and has not
+     * yet been initialized
+     */
+    TASK_STATUS_IDLE = 0,
+
+    /**
+     * Means this thread is on a run queue. It is
+     * not currently executing user code.
+     */
+    TASK_STATUS_RUNNABLE = 1,
+
+    /**
+     * Means this thread may execute user code.
+     */
+    TASK_STATUS_RUNNING = 2,
+
+    /**
+     * Means this thread is blocked in the runtime.
+     * It is not executing user code. It is not on a run queue,
+     * but should be recorded somewhere so it can be scheduled
+     * when necessary.
+     */
+    TASK_STATUS_WAITING = 3,
+
+    /**
+     * Means the thread stopped itself for a suspend
+     * preemption. IT is like THREAD_STATUS_WAITING, but
+     * nothing is yet responsible for readying it. some
+     * suspend must CAS the status to THREAD_STATUS_WAITING
+     * to take responsibility for readying this thread
+     */
+    TASK_STATUS_PREEMPTED = 4,
+
+    /**
+     * Means this thread is currently unused. It may be
+     * just exited, on a free list, or just being initialized.
+     * It is not executing user code.
+     */
+    TASK_STATUS_DEAD = 5,
+
+    /**
+     * Indicates someone wants to suspend this thread (probably the
+     * garbage collector).
+     */
+    TASK_SUSPEND = 0x1000,
+} task_status_t;
+
 /**
  * The task regs are used to save the full context of a
  * task, and are also used during exception handling
@@ -74,8 +123,6 @@ STATIC_ASSERT(sizeof(task_ucontext_t) <= USER_PAGE_SIZE);
  * The task struct, used to represent a single task
  */
 typedef struct task {
-    // TODO: link
-
     // the actual pid of the process
     pid_t pid;
 
@@ -84,6 +131,12 @@ typedef struct task {
     // allocation to the peripheral access
     mmu_t mmu;
 
+    // The current status of the task
+    task_status_t status;
+
+    // Link for the scheduler
+    struct task* sched_link;
+
     // The user context of the thread, contains
     // the registers as well
     task_ucontext_t* ucontext;
@@ -91,12 +144,44 @@ typedef struct task {
 
 task_t* create_task();
 
-void task_free(task_t* task);
+void release_task(task_t* task);
 
-#define SAFE_TASK_FREE(task) \
+#define SAFE_RELEASE_TASK(task) \
     do { \
         if (task != NULL) { \
-            task_free(task); \
+            release_task(task); \
             task = NULL; \
         } \
     } while (0)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Task status
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Get the status of a task atomically
+ *
+ * @param thread    [IN] The target task
+ */
+task_status_t get_task_status(task_t* thread);
+
+/**
+ * Compare and swap the thread state atomically
+ *
+ * @remark
+ * This will suspend until the thread status is equals to old and only then try to
+ * set it to new, if that fails it will continue to try until it has a success.
+ *
+ * @param thread    [IN] The target thread
+ * @param old       [IN] The old status
+ * @param new       [IN] The new status
+ */
+void cas_task_state(task_t* task, task_status_t old, task_status_t new);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Task context
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void save_task_context(task_t* task, task_regs_t* regs);
+
+void restore_task_context(task_t* task, task_regs_t* regs);
