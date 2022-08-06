@@ -102,6 +102,18 @@ void init_dport() {
     // now enable the cache
     DPORT_PRO_CACHE_CTRL.cache_enable = 1;
     DPORT_APP_CACHE_CTRL.cache_enable = 1;
+
+    // unmap all the interrupts by setting all of them to the default
+    // value, which is an internal interrupt which is unusable
+    for (int i = 0; i < ARRAY_LEN(DPORT_PRO_INT_MAP); i++) {
+        DPORT_PRO_INT_MAP[i] = 16;
+        DPORT_APP_INT_MAP[i] = 16;
+    }
+
+    // make sure there are no cross-core interrupts
+    for (int i = 0; i < 4; i++) {
+        DPORT_INTR_FROM_CPU[i] = 0;
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -53,10 +53,11 @@ include toolchain/esptool.mk
 QEMU			?= /home/tomato/checkouts/esp_qemu/build/qemu-system-xtensa
 
 run: all
-	@sudo $(ESPTOOL) \
+	$(ESPTOOL) \
 			--chip esp32 \
 			--before default_reset \
 			--after hard_reset \
+			--no-stub \
 			write_flash \
 			0 \
 			out/image.bin

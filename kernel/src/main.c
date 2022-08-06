@@ -8,6 +8,7 @@
 #include "arch/cpu.h"
 #include "drivers/rtc_cntl.h"
 #include "drivers/timg.h"
+#include "drivers/uart.h"
 
 /**
  * The stacks for each cpu
@@ -26,6 +27,8 @@ void* g_kernel_stacks[2] = {
 
 void kmain() {
     err_t err = NO_ERROR;
+
+    init_uart();
     TRACE("Hello from kernel!");
 
     // make sure we are running from the pro cpu
@@ -53,11 +56,11 @@ void kmain() {
     ps.woe = 1;
     __write_ps(ps);
 
-    // enable all interrupt levels
-    __WSR(INTENABLE, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5 | BIT6);
-
     // clear all pending interrupts
-    __WSR(INTCLEAR, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5 | BIT6);
+    __WSR(INTCLEAR, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5);
+
+    // enable all interrupt levels
+    __WSR(INTENABLE, BIT0 | BIT1 | BIT2 | BIT3 | BIT4 | BIT5);
 
     // sync all these configurations
     __rsync();

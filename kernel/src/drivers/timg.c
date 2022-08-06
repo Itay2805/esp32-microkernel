@@ -90,12 +90,22 @@ extern volatile TIMG_INT_REG TIMG0_INT_CLR;
 // Implementation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void wdt_unlock() {
+    TIMG0_WDTWPROTECT = 0x050D83AA1;
+}
+
+static void wdt_lock() {
+    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+}
+
 __attribute__((noinline))
 err_t init_wdt() {
     err_t err = NO_ERROR;
 
     // allocate an interrupt for the watchdog
-    CHECK_AND_RETHROW(dport_map_interrupt(INT_TG_WDT_LEVEL, false));
+    CHECK_AND_RETHROW(dport_map_interrupt(TG_WDT_LEVEL_INT, false));
+
+    wdt_unlock();
 
     // for pro cpu
     TIMG_WDTCONFIG_REG wdtconfig = {
@@ -125,8 +135,7 @@ err_t init_wdt() {
     // enable it
     TIMG0_WDTCONFIG.en = 1;
 
-    // protect the counter
-    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+    wdt_lock();
 
     // enable watchdog timeout
     TIMG0_INT_ENA.wdt_int = 1;
@@ -139,26 +148,21 @@ cleanup:
 }
 
 void wdt_enable() {
-    TIMG0_WDTWPROTECT = 0x050D83AA1;
+    wdt_unlock();
     TIMG0_WDTCONFIG.en = 1;
-    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+    wdt_lock();
 }
 
 void wdt_disable() {
-    TIMG0_WDTWPROTECT = 0x050D83AA1;
+    wdt_unlock();
     TIMG0_WDTCONFIG.en = 0;
-    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+    wdt_lock();
 }
 
 static void wdt_feed() {
-    // unprotected it
-    TIMG0_WDTWPROTECT = 0x050D83AA1;
-
-    // touch it
+    wdt_unlock();
     TIMG0_WDTFEED = 1;
-
-    // protect it again
-    TIMG0_WDTWPROTECT = 0xDEADBEEF;
+    wdt_lock();
 }
 
 bool wdt_handle() {

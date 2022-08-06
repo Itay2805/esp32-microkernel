@@ -16,7 +16,7 @@ fetch-toolchain:
 	rm -rf $(ESPTOOL_NAME)
 
 	wget -N $(TOOLCHAIN_DOWNLOAD_URL)
-	tar xzvf $(TOOLCHAIN_NAME).tar.gz
+	tar -xvf $(TOOLCHAIN_NAME).tar.xz
 
 	wget -N $(ESPTOOL_DOWNLOAD_URL)
 	unzip $(ESPTOOL_NAME).zip

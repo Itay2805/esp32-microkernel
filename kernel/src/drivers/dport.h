@@ -20,25 +20,35 @@ void init_dport();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef enum interrupt_source {
-    INT_INVALID = -1,
-
-    INT_TG_T0_LEVEL = 14,
-    INT_TG_T1_LEVEL = 15,
-    INT_TG_WDT_LEVEL = 16,
-    INT_TG_LACT_LEVEL = 17,
-    INT_TG1_T0_LEVEL = 18,
-    INT_TG1_T1_LEVEL = 19,
-    INT_TG1_WDT_LEVEL = 20,
-    INT_TG1_LACT_LEVEL = 21,
+    INVALID_INT_SOURCE = -1,
+    // ...
+    TG_T0_LEVEL_INT = 14,
+    TG_T1_LEVEL_INT = 15,
+    TG_WDT_LEVEL_INT = 16,
+    TG_LACT_LEVEL_INT = 17,
+    TG1_T0_LEVEL_INT = 18,
+    TG1_T1_LEVEL_INT = 19,
+    TG1_WDT_LEVEL_INT = 20,
+    TG1_LACT_LEVEL_INT = 21,
     GPIO_INTERRUPT = 22,
     GPIO_INTERRUPT_NMI = 23,
     // ...
-    INT_I2C_EXT0 = 49,
-    INT_I2C_EXT1 = 50,
+    SPI_INTR_0 = 28,
+    SPI_INTR_1 = 29,
+    SPI_INTR_2 = 30,
+    SPI_INTR_3 = 31,
+    //
+    UART_INTR = 34,
+    UART1_INTR = 35,
+    UART2_INTR = 36,
     // ...
-    INT_MMU_IA = 66,
-    INT_MPU_IA = 67,
-    INT_CACHE_IA = 68,
+    I2C_EXT0_INTR = 49,
+    I2C_EXT1_INTR = 50,
+    // ...
+    MMU_IA_INT = 66,
+    MPU_IA_INT = 67,
+    CACHE_IA_INT = 68,
+    INTERRUPT_SOURCE_MAX = 69,
 } interrupt_source_t;
 
 /**

@@ -94,6 +94,8 @@ void common_exception_handler(task_regs_t* regs) {
 void common_interrupt_handler(task_regs_t* regs) {
     // special case for scheduler
     if (wdt_handle()) {
+        TRACE("GOT WATCHDOG INTERRUPT");
+
         // save the current task context
         task_t* task = get_current_task();
         if (task != NULL) {
