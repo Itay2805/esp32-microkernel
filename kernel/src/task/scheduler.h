@@ -33,9 +33,11 @@ void scheduler_preempt_enable(void);
 // Callbacks from interrupts to the scheduler
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_on_schedule(task_regs_t* ctx);
+void scheduler_on_schedule(task_regs_t* regs);
 
-void scheduler_on_park(task_regs_t* ctx);
+void scheduler_on_park(task_regs_t* regs);
+
+void scheduler_on_drop(task_regs_t* regs);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Call the scheduler to do stuff

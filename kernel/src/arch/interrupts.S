@@ -466,7 +466,7 @@ syscall_entry:
     // actually update the PC
     wsr.epc1 a0
 
-    // TODO: fast IPC path, that won't save everything
+    // TODO: fast path, that won't save everything
 
     j .slow_path
 

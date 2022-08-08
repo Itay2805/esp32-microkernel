@@ -37,7 +37,13 @@ typedef enum syscall {
     // kernel only
     //
 
-    SYSCALL_PARK            = 0x08,
-    SYSCALL_YIELD           = 0x09,
-    SYSCALL_DROP            = 0x0a,
+    SYSCALL_SCHED_PARK      = 0x08,
+    SYSCALL_SCHED_YIELD     = 0x09,
+    SYSCALL_SCHED_DROP      = 0x0a,
 } syscall_t;
+
+static inline uint32_t syscall0(syscall_t syscall) {
+    register int a2 asm("a2") = syscall;
+    __asm__ volatile ("SYSCALL" : "+r"(a2) :: "memory");
+    return a2;
+}

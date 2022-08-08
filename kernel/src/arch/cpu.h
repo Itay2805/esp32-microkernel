@@ -30,6 +30,10 @@ typedef struct per_cpu_context {
 
     // the currently running task
     task_t* current_task;
+
+    // callback to be called when parking
+    void(*park_callback)(void* arg);
+    void* park_arg;
 } per_cpu_context_t;
 
 /**

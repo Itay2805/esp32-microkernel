@@ -94,9 +94,9 @@ void common_exception_handler(task_regs_t* regs) {
 void common_interrupt_handler(task_regs_t* regs) {
     // special case for scheduler
     if (wdt_handle()) {
-        TRACE("GOT WATCHDOG INTERRUPT");
         scheduler_on_schedule(regs);
     } else {
+        // TODO: continue through the dispatch
         TRACE("Got unknown interrupt");
     }
 }

@@ -235,48 +235,51 @@ static void schedule(task_regs_t* ctx) {
 // Scheduler callbacks
 //----------------------------------------------------------------------------------------------------------------------
 
-void scheduler_on_schedule(task_regs_t* ctx) {
+void scheduler_on_schedule(task_regs_t* regs) {
     // save the current thread, don't park it
-    save_current_task(ctx, false);
+    save_current_task(regs, false);
 
     // now schedule a new thread
-    schedule(ctx);
+    schedule(regs);
 }
 
-void scheduler_on_park(task_regs_t* ctx) {
+void scheduler_on_park(task_regs_t* regs) {
     // save the current thread, park it
-    save_current_task(ctx, true);
+    save_current_task(regs, true);
 
     // check if we need to call a callback before we schedule
-    if (ctx->ar[2] != 0) {
-        ((void(*)(uint32_t))ctx->ar[2])(ctx->ar[3]);
+    per_cpu_context_t* pctx = get_cpu_context();
+    if (pctx->park_callback != NULL) {
+        pctx->park_callback(pctx->park_arg);
+        pctx->park_callback = NULL;
+        pctx->park_arg = NULL;
     }
 
     // cancel the deadline of the current thread, as it is parked
     scheduler_cancel_deadline();
 
     // schedule a new thread
-    schedule(ctx);
+    schedule(regs);
 }
 
-void scheduler_on_drop(task_regs_t* ctx) {
+void scheduler_on_drop(task_regs_t* regs) {
     per_cpu_context_t* pctx = get_cpu_context();
 
-    task_t* current_task = get_current_task();
+    task_t* current_task = pctx->current_task;
     pctx->current_task = NULL;
 
-    if (pctx->current_task != NULL) {
+    if (current_task != NULL) {
         // change the status to dead
-        cas_task_state(pctx->current_task, TASK_STATUS_RUNNING, TASK_STATUS_DEAD);
+        cas_task_state(current_task, TASK_STATUS_RUNNING, TASK_STATUS_DEAD);
 
         // release the reference that the scheduler has
-        release_task(pctx->current_task);
+        release_task(current_task);
     }
 
     // cancel the deadline of the current thread, as it is dead
     scheduler_cancel_deadline();
 
-    schedule(ctx);
+    schedule(regs);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -288,18 +291,19 @@ void scheduler_yield() {
     if (get_cpu_context()->preempt_disable_depth > 0) {
         return;
     }
-
-    ASSERT(!"TODO: scheduler_yield");
+    syscall0(SYSCALL_SCHED_YIELD);
 }
 
 void scheduler_park(void(*callback)(void* arg), void* arg) {
-    ASSERT(!"TODO: scheduler_park");
+    get_cpu_context()->park_callback = callback;
+    get_cpu_context()->park_arg = arg;
+    syscall0(SYSCALL_SCHED_PARK);
 }
 
 void scheduler_drop_current() {
-    ASSERT(!"TODO: scheduler_drop_current");
+    syscall0(SYSCALL_SCHED_DROP);
 }
 
-task_t* get_current_thread() {
+task_t* get_current_task() {
     return get_cpu_context()->current_task;
 }
