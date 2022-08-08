@@ -34,14 +34,16 @@ For the kernel mode we have a very defined memory map.
 - User code and data: those are set in areas where we have configurable MMU
 - Kernel code and data: those are set in areas where we have a static MMU
 
-| Name            | Address Range             | Size  | Usage       |
-|-----------------|---------------------------|-------|-------------|
-| SRAM 2          | 0x3FFA_E000 - 0x3FFB_FFFF | 72KB  | Kernel heap |
-| SRAM 2          | 0x3FFC_0000 - 0x3FFD_FFFF | 128KB | User data   |
-| SRAM 1          | 0x3FFE_0000 - 0x3FFF_FFFF | 128KB | Kernel Data |
-| SRAM 1          | 0x4000_0000 - 0x4000_7FFF | 128KB | Kernel Code |
-| SRAM 0          | 0x4007_0000 - 0x4007_FFFF | 64KB  | Cache       | 
-| SRAM 0          | 0x4008_0000 - 0x4009_FFFF | 128KB | User Code   |
+| Name              | Address Range               | Size    | Usage         |
+|-------------------|-----------------------------|---------|---------------|
+| SRAM 2            | 0x3FFA_E000 - 0x3FFB_FFFF   | 72KB    | Kernel heap   |
+| SRAM 2            | 0x3FFC_0000 - 0x3FFD_FFFF   | 128KB   | User data     |
+| ----------------- | --------------------------- | ------- | ------------- |
+| SRAM 1            | 0x3FFE_0000 - 0x3FFF_FFFF   | 128KB   | Kernel Data   |
+| SRAM 1            | 0x400A_0000 - 0x400B_FFFF   | 128KB   | Kernel Code   |
+| ----------------- | --------------------------- | ------- | ------------- |
+| SRAM 0            | 0x4007_0000 - 0x4007_FFFF   | 64KB    | Cache         | 
+| SRAM 0            | 0x4008_0000 - 0x4009_FFFF   | 128KB   | User Code     |
 
 *Note: SRAM 1 code and data are aliases, so there is a total of 128KB for both*
 

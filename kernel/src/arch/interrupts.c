@@ -88,7 +88,12 @@ void common_exception_handler(task_regs_t* regs) {
 
     printf("\n\r");
 
+    // dump everything
+    task_regs_dump(regs);
+
     // TODO: kill the task that caused the problem
+
+    while(1);
 }
 
 void common_interrupt_handler(task_regs_t* regs) {

@@ -82,8 +82,7 @@ typedef struct task_regs {
     uint32_t windowstart;   // 284
     uint16_t windowmask;    // 288
     uint16_t windowsize;    // 190
-    // TODO: save additional registers so they
-    //       won't affect the kernel
+    // TODO: save scompare1 (used by atomic operations which userspace might do)
 } task_regs_t;
 STATIC_ASSERT(offsetof(task_regs_t, sar) == TASK_REGS_SAR);
 STATIC_ASSERT(offsetof(task_regs_t, lbeg) == TASK_REGS_LBEG);
@@ -99,6 +98,11 @@ STATIC_ASSERT(sizeof(task_regs_t) == TASK_REGS_SIZE);
 void task_regs_dump(task_regs_t* regs);
 
 /**
+ * The default stack size
+ */
+#define STACK_SIZE      4096
+
+/**
  * The task context is essentially the stack
  * and the ipc buffer that is given for the
  * user task, usermode can modify it as much
@@ -107,7 +111,7 @@ void task_regs_dump(task_regs_t* regs);
  */
 typedef struct task_ucontext {
     // the stack for userspace
-    char stack[4096];
+    char stack[STACK_SIZE];
 
     // the task name
     char name[64];

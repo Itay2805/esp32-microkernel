@@ -25,7 +25,7 @@ CFLAGS 		+= -Wno-psabi
 CFLAGS 		+= -Wno-stringop-overflow
 
 # Size optimization, include debug info
-CFLAGS 		+= -Os -g3
+CFLAGS 		+= -Og -g3
 
 # Link time optimization
 CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
@@ -74,6 +74,15 @@ CFLAGS 		+= -mlongcalls
 
 SRCS 		:= $(shell find src -name '*.c')
 SRCS 		+= $(shell find src -name '*.S')
+
+#
+# UMM
+#
+
+SRCS		+= libs/umm_malloc/src/umm_malloc.c
+
+CFLAGS 		+= -Ilibs/umm_malloc/src
+CFLAGS 		+= -DUMM_CFGFILE="<util/umm_malloc_cfgport.h>"
 
 ########################################################################################################################
 # Targets

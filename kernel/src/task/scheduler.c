@@ -73,7 +73,7 @@ static void wake_cpu() {
 // Wake a thread
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_ready_thread(task_t* task) {
+void scheduler_ready_task(task_t* task) {
     task->sched_link = NULL;
 
     scheduler_preempt_disable();
@@ -153,7 +153,7 @@ static void save_current_task(task_regs_t* ctx, bool park) {
 
     ASSERT(pctx->current_task != NULL);
     task_t* current_task = pctx->current_task;
-    current_task = NULL;
+    pctx->current_task = NULL;
 
     // save the state and set the thread to runnable
     save_task_context(current_task, ctx);
@@ -213,6 +213,7 @@ static task_t* find_runnable() {
         // we have nothing to do, so put the cpu into
         // a sleeping state until an interrupt or something
         // else happens. we will lower the state
+        TRACE("NOTHING TO RUN");
         asm volatile ("WAITI 0");
 
         lock_scheduler();

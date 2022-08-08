@@ -345,7 +345,7 @@ restore_full_interrupt_context:
 enable_kernel_exceptions:
     // set WOE = 1
     //     INTLEVEL = 1
-    movi a2, (1 << 18) | 1
+    movi a2, (1 << 18) | 0xf
     wsr.ps a2
     rsync
     ret
@@ -356,7 +356,7 @@ enable_kernel_exceptions:
  */
 disable_kernel_exceptions:
     // set EXCM = 1
-    movi a2, (1 << 4) | 1
+    movi a2, (1 << 4) | 0xf
     wsr.ps a2
     rsync
     ret

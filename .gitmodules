@@ -1,0 +1,3 @@
+[submodule "kernel/libs/umm_malloc"]
+	path = kernel/libs/umm_malloc
+	url = git@github.com:rhempel/umm_malloc.git

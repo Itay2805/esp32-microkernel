@@ -28,15 +28,9 @@ extern volatile uint32_t PIDCTRL_NMI_MASK_DISABLE;
 // Initialization
 //----------------------------------------------------------------------------------------------------------------------
 
-/**
- * The vecbase as defined in the VDSO
- */
 extern symbol_t vecbase;
 
 void init_pid() {
-    // set the vecbase
-    __WSR(VECBASE, (uintptr_t)vecbase);
-
     // we are going to skip the kernel exception vector since we care about it less
     PIDCTRL_INTERRUPT_ADDR[0] = (uintptr_t)vecbase + 0x340; /* user exception handler */
     PIDCTRL_INTERRUPT_ADDR[1] = (uintptr_t)vecbase + 0x180; /* interrupt level 2 */
@@ -65,7 +59,7 @@ void pid_prepare() {
 }
 
 bool pid_binding_is_primary(pid_binding_t* binding) {
-    return get_cpu_context()->primary_binding == binding;
+    return binding != NULL && get_cpu_context()->primary_binding == binding;
 }
 
 void pid_binding_rebind(pid_binding_t* binding) {

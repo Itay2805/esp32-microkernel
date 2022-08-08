@@ -1,6 +1,6 @@
 #include "mem.h"
 
-#include "tlsf.h"
+#include <umm_malloc.h>
 
 #include <util/string.h>
 #include <util/trace.h>
@@ -10,40 +10,39 @@
 extern void* _heap_start;
 extern void* _heap_size;
 
-static tlsf_t m_tlsf = NULL;
+void* UMM_MALLOC_CFG_HEAP_ADDR = NULL;
+uint32_t UMM_MALLOC_CFG_HEAP_SIZE = 0;
 
 err_t init_mem() {
     err_t err = NO_ERROR;
 
-    // get the size and base
-    size_t size = (size_t)&_heap_size;
-    uintptr_t base = (uintptr_t)&_heap_start;
+    void* heap_start = &_heap_start;
+    uint32_t heap_size = (uint32_t)&_heap_size;
 
-    // make sure we have enough space
-    CHECK(size >= tlsf_size());
+    // align the heap start
+    void* tmp_start = ALIGN_UP(heap_start, 4);
+    uint32_t added = tmp_start - heap_start;
+    heap_start = tmp_start;
+    heap_size -= added;
 
-    // allocate area for the tlsf block
-    void* mem = (void*)base + tlsf_size();
-    base += tlsf_size();
-    size -= tlsf_size();
+    // align the size of the heap properly
+    heap_size = ALIGN_DOWN(heap_size, 4);
 
-    // init the tlsf block
-    m_tlsf = tlsf_create(mem);
-    CHECK(m_tlsf != NULL);
+    UMM_MALLOC_CFG_HEAP_ADDR = heap_start;
+    UMM_MALLOC_CFG_HEAP_SIZE = heap_size;
+    TRACE("Kernel heap: %p (%S)", UMM_MALLOC_CFG_HEAP_ADDR, UMM_MALLOC_CFG_HEAP_SIZE);
 
-    TRACE("Kernel heap: %p (%S)", base, size);
-
-    // add the memory to the tlsf allocator
-    CHECK(tlsf_add_pool(m_tlsf, (void*)base, size) != NULL);
+    // initialize it
+    umm_init();
 
 cleanup:
     return err;
 }
 
 void* malloc(size_t size) {
-    return tlsf_malloc(m_tlsf, size);
+    return umm_malloc(size);
 }
 
 void free(void* ptr) {
-    tlsf_free(m_tlsf, ptr);
+    umm_free(ptr);
 }
