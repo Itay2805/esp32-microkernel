@@ -1,6 +1,6 @@
 #pragma once
 
-#define TASK_REGS_AR(x)         (x * 4)
+#define TASK_REGS_AR(x)         ((x) * 4)
 #define TASK_REGS_AR_END        256
 #define TASK_REGS_SAR           256
 #define TASK_REGS_LBEG          260

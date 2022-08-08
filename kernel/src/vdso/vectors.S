@@ -157,7 +157,32 @@ vecbase:
 .type  kernel_exception,@function
 .align 64
  kernel_exception:
-    rfe
+    // allocate the task_regs_t for the current exception
+    addi sp, sp, -TASK_REGS_SIZE
+
+    // now save the original a0-a2, we need
+    // them to do stuff
+    s32i a0, sp, TASK_REGS_AR(0)
+    s32i a1, sp, TASK_REGS_AR(1)
+    s32i a2, sp, TASK_REGS_AR(2)
+    s32i a3, sp, TASK_REGS_AR(3)
+
+    //
+    // we are going to start by loading a fast handler, which
+    // could also be a common slow handler, the idea is that
+    // the fast handler can take a quick path of handling some
+    // of the exception causes.
+    //
+    // it is safe to use exccause as index since it is only 6 bits
+    // meaning that we only haev a max of 64 entries
+    //
+    rsr.exccause a0
+    movi a2, g_fast_interrupts
+    addx4 a0, a0, a2
+    l32i a0, a0, 0
+
+    // jump to it
+    jx a0
 .size kernel_exception, . - kernel_exception
 
 /*

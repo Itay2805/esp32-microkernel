@@ -18,15 +18,29 @@ in the SoC itself, that MMU does allow for both protections and translation of
 virtual address range to a physical one. In addition it uses a PID controller 
 that can be used to switch between PIDs.
 
-The combination of the MMU and PID controller allows us to fully protect the kernel
+The combination of the MMU and PID controller allows us to protect the kernel
 memory, the system resources, and DMA access of all the devices in the system. 
 Essentially allowing to prevent escalation from a user process to the kernel.
 
-Of course the internal processor state is still modifiable, for the most part it is 
-fine since all the special MMU and PID stuff are protected by the MMU. The userspace
-can still change one important register, which is the vecbase, but that should be based 
-because the entry point is still configured in the PID controller, so you can't take over 
-the device, but you can DOS it, with a simple watchdog we should be fine :)
+It is worth noting that the MMU also prevents user code from modifying its own 
+code, so self modifying code is not allowed.
+
+Sadly, the internal processor state is still modifiable, for the most part it is 
+fine since all the special MMU and PID stuff are protected by the MMU. But this breaks 
+once the user can change the vecbase (Where interrupts jump to) and cause an exception/interrupt
+to happen while we are handling an exception/interrupt. For example, setting a breakpoint on the 
+first instruction of the interrupt handler, and then jumping to it, would cause the PID 
+controller to switch us to kernel mode, but after the first instruction is executed we 
+will go to the vecbase set by the user, which can be usercode of course, You might ask why
+not have the first opcode set the vecbase, sadly xtensa requires at least two opcodes to load
+the address, and we actually take 3 since we need to preserve the first reg as well...
+
+So to summarise, our threat model assumes innocent apps, meaning that apps are not trying to 
+compromise the kernel, but that they may have vulnerabilities in them. With the memory safeties 
+that we can give, an attacker is highly unlikely to be able to have gadgets to perform the attack.
+
+If you have an idea on how to prevent the user from modifying vecbase, I will be more than happy
+to hear about it, as giving a full isolation would be my dream.
 
 For more indepth information it is the best to look at the code.
 

@@ -203,9 +203,9 @@ restore_full_interrupt_context:
     // regs to clear
     wsr.excsave1 a2
 
-    #
+    //
     // now we need to restore all the spill area
-    #
+    //
 
     // load the window size, aka the count we need to restore
     // this was calculated when we last spilled for ease of use
@@ -471,10 +471,10 @@ syscall_entry:
     j .slow_path
 
 .fast_path:
-    #-------------------------------------------------
+    //-------------------------------------------------
     // fast path, check for IPC syscall and
     // small payload
-    #-------------------------------------------------
+    //-------------------------------------------------
 
     // TODO: do fast path handling
 
@@ -482,10 +482,10 @@ syscall_entry:
     j .return_from_syscall
 
 .slow_path:
-    #-------------------------------------------------
+    //-------------------------------------------------
     // slow path, we are going to call C code,
     // save everything
-    #-------------------------------------------------
+    //-------------------------------------------------
 
     // spill the full context
     call0 save_full_interrupt_context

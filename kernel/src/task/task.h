@@ -71,7 +71,7 @@ typedef enum task_status {
  *       code that hardcodes these offsets.
  */
 typedef struct task_regs {
-    uint32_t ar[64];        // 0-252
+    uint32_t ar[64];        // 0
     uint32_t sar;           // 256
     uint32_t lbeg;          // 260
     uint32_t lend;          // 264
