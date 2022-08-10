@@ -213,7 +213,6 @@ static task_t* find_runnable() {
         // we have nothing to do, so put the cpu into
         // a sleeping state until an interrupt or something
         // else happens. we will lower the state
-        TRACE("NOTHING TO RUN");
         asm volatile ("WAITI 0");
 
         lock_scheduler();

@@ -78,15 +78,11 @@ void task_regs_dump(task_regs_t* regs) {
 static pid_t m_pid_gen = 0;
 
 task_t* create_task() {
-    TRACE("BEFORE ALLOC");
-
     // allocate the memory
     task_t* task = malloc(sizeof(task_t));
     if (task == NULL) {
         return NULL;
     }
-
-    TRACE("ALLOCATED TASK %p", task);
 
     // zero it out
     memset(task, 0, sizeof(task_t));
@@ -95,18 +91,12 @@ task_t* create_task() {
     // initialize the uctx
     task->pid = m_pid_gen++;
 
-    TRACE("ITS PID IS %d", task->pid);
-
     // allocate the uctx
     int uctx_page = umem_alloc_data_page();
-    TRACE("UCTX PAGE IS AT %d", uctx_page);
     mmu_map_code(&task->mmu, MMU_SPACE_DATA, UCTX_PAGE_INDEX, MMU_SPACE_ENTRY(uctx_page));
 
     task->ucontext = DATA_PAGE_ADDR(uctx_page);
-    TRACE("UCTX ADDRESS IS %p", task->ucontext);
     memset(task->ucontext, 0, sizeof(task_ucontext_t));
-
-    TRACE("SETTING PS");
 
     // setup the user context
     task->ucontext->regs.ps = (ps_t){
@@ -115,8 +105,6 @@ task_t* create_task() {
         .um = 1,
         .woe = 1
     };
-
-    TRACE("SETTING STACK TO %p", task->ucontext->stack + STACK_SIZE);
 
     // set the SP to be the end of the stack, which is at the ucontext
     // area at the end

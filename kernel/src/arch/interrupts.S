@@ -111,8 +111,10 @@ save_full_interrupt_context:
     //    is always set, so just subtracting one will work fine
     addi a3, a2, -1
 
-    // b. keep first bit set
-    //       TODO: explain bit magic
+    // b. negate the number, and then and it with the version that does have
+    //    the first bit set, this will make sure that the only bit that stays
+    //    is the first one, if it was set, especially after we cleared it in
+    //    the previous instruction
     neg a3, a3
     and a3, a3, a2
 
@@ -151,16 +153,19 @@ save_full_interrupt_context:
     // If we reached zero we are done
     bnez a2, .spill_loop
 
-    // now restore the windowstart and windowbase
-    // as we said before, windowbase is stored in sar, so get that
-    rsr.excsave1 a2
-    wsr.windowstart a2
+    // now set correctly the windowbase and windowstart
+    // we moved around to spill everything, and now that we
+    // are done spilling we are going to set the windowstart
+    // to 1 shift the windowbase, and we are going to set
+    // the windowbase as it was before, this will essentially
+    // clear everything but keep the a0 and a1 as they were at the start
     rsr.sar a2
+    movi a3, 1
+    ssl a2      // Set Shift Amount for Left Shift
+    sll a3, a3  // Shift Left Logical
+    wsr.windowstart a3
     wsr.windowbase a2
     rsync
-
-    // NOTE: our sp has a0 have stayed the same since we always edited the next
-    //       register window registers and not our original, so we are safe
 
 .done_spill:
 

@@ -32,6 +32,8 @@ void* g_kernel_stacks[2] = {
 
 static void dummy() {
     TRACE("Hello from task!");
+    scheduler_yield();
+    TRACE("Hello again!");
     scheduler_park(NULL, NULL);
 }
 
@@ -40,10 +42,6 @@ static err_t setup_init() {
 
     task_t* task = create_task();
     CHECK(task != NULL);
-
-    TRACE("task=%p", task);
-    TRACE("task->ucontext=%p", task->ucontext);
-    TRACE("dummy=%p", dummy);
 
     task->ucontext->regs.pc = (uint32_t)dummy;
     scheduler_ready_task(task);
@@ -77,7 +75,6 @@ void kmain() {
     init_pid();
 
     // initialize the kernel allocator
-    TRACE("BEFORE");
     CHECK_AND_RETHROW(init_mem());
 
     // enable interrupts

@@ -78,5 +78,4 @@ qemu: all
 		-serial stdio \
 		-monitor telnet:localhost:1235,server,nowait \
 		-drive file=out/image.bin.full,if=mtd,format=raw \
-		-m 4M \
-		-d int
+		-m 4M
