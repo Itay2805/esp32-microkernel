@@ -77,7 +77,7 @@ void task_regs_dump(task_regs_t* regs) {
 
 static pid_t m_pid_gen = 0;
 
-task_t* create_task() {
+task_t* create_task(void* entry, const char* fmt, ...) {
     // allocate the memory
     task_t* task = malloc(sizeof(task_t));
     if (task == NULL) {
@@ -105,11 +105,18 @@ task_t* create_task() {
         .um = 1,
         .woe = 1
     };
+    task->ucontext->regs.pc = (uintptr_t)entry;
 
     // set the SP to be the end of the stack, which is at the ucontext
     // area at the end
 //    task->ucontext->regs.ar[1] = (uint32_t) (DATA_PAGE_ADDR(UCTX_PAGE_INDEX) + offsetof(task_ucontext_t, stack) + STACK_SIZE);
     task->ucontext->regs.ar[1] = (uint32_t) (task->ucontext->stack + STACK_SIZE);
+
+    // set the name
+    va_list va;
+    va_start(va, fmt);
+    vsnprintf(task->ucontext->name, sizeof(task->ucontext->name), fmt, va);
+    va_end(va);
 
     // set the state as waiting
     cas_task_state(task, TASK_STATUS_DEAD, TASK_STATUS_WAITING);

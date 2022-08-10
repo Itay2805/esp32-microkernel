@@ -31,19 +31,16 @@ void* g_kernel_stacks[2] = {
 };
 
 static void dummy() {
-    TRACE("Hello from task!");
-    scheduler_yield();
-    TRACE("Hello again!");
+    TRACE("Hello from task `%s`!", get_current_task()->ucontext->name);
     scheduler_park(NULL, NULL);
+    while(1);
 }
 
-static err_t setup_init() {
+static err_t setup_init(int a) {
     err_t err = NO_ERROR;
 
-    task_t* task = create_task();
+    task_t* task = create_task(dummy, "my task %d", a);
     CHECK(task != NULL);
-
-    task->ucontext->regs.pc = (uint32_t)dummy;
     scheduler_ready_task(task);
 
 cleanup:
@@ -92,7 +89,8 @@ void kmain() {
     __rsync();
 
     // setup the init task
-    CHECK_AND_RETHROW(setup_init());
+    CHECK_AND_RETHROW(setup_init(1));
+    CHECK_AND_RETHROW(setup_init(2));
 
     // init scheduler
     CHECK_AND_RETHROW(init_wdt());

@@ -56,6 +56,8 @@ static const char* m_cause_str[] = {
 void common_exception_handler(task_regs_t* regs) {
     int cause = __RSR(EXCCAUSE);
 
+    wdt_disable();
+
     // print the cuase
     printf("[-] got exception ");
     if (cause < ARRAY_LEN(m_cause_str) && m_cause_str[cause] != NULL) {

@@ -24,7 +24,7 @@ int umem_alloc_code_page() {
     }
 
     // find a free page
-    int index = __builtin_ffs(m_code_pages);
+    int index = __builtin_ffs(m_code_pages) - 1;
     m_code_pages &= ~(1 << index);
 
     // return it as a pointer
@@ -38,7 +38,7 @@ int umem_alloc_data_page() {
     }
 
     // find a free page
-    int index = __builtin_ffs(m_data_pages);
+    int index = __builtin_ffs(m_data_pages) - 1;
     m_data_pages &= ~(1 << index);
 
     // return it as a pointer

@@ -197,11 +197,6 @@ static task_t* find_runnable() {
         //
 
         lock_scheduler();
-        if (m_global_run_queue_size != 0) {
-            task = global_run_queue_get();
-            unlock_scheduler();
-            return task;
-        }
 
         // we are now idle
         cpu_put_idle();

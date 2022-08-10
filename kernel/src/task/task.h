@@ -146,7 +146,7 @@ typedef struct task {
     task_ucontext_t* ucontext;
 } task_t;
 
-task_t* create_task();
+task_t* create_task(void* entry_point, const char* fmt, ...);
 
 void release_task(task_t* task);
 

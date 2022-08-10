@@ -25,7 +25,7 @@ CFLAGS 		+= -Wno-psabi
 CFLAGS 		+= -Wno-stringop-overflow
 
 # Size optimization, include debug info
-CFLAGS 		+= -Og -g3
+CFLAGS 		+= -Os -g3
 
 # Link time optimization
 CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
