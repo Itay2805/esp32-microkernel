@@ -48,7 +48,7 @@ SECTIONS {
 
     .text : {
         /* create the kernel header */
-        LONG(0x524E4C4B);    /* magic */
+        LONG(0x4c4e524b);    /* magic */
         LONG(SIZEOF(.text)); /* code size */
         LONG(SIZEOF(.data)); /* data size */
         LONG(SIZEOF(.vdso)); /* vdso size */

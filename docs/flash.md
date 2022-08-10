@@ -1,5 +1,11 @@
 # Flash 
 
+## Hardware
+
+The TTGO T-Watch-2020-V2 seems to have a Winbond W25Q128W Serial NOR flash.
+
+## Software
+
 We are going to use the internal flash for two main things:
 - Storing installed apps
 - Storing NVM variables

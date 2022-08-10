@@ -38,7 +38,7 @@ typedef struct kernel_header {
     uint32_t entry_point;
 } kernel_header_t;
 
-#define KERNEL_MAGIC 0x524E4C4B
+#define KERNEL_MAGIC 0x4c4e524b
 #define KERNEL_CODE_BASE ((void*)0x400A0000)
 #define KERNEL_DATA_BASE ((void*)0x3FFE0000)
 #define KERNEL_VDSO_BASE ((void*)0x4009E000)
