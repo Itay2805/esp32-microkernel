@@ -24,7 +24,7 @@ CFLAGS 		+= -Wno-address-of-packed-member
 CFLAGS 		+= -Wno-psabi
 
 # Size optimization, include debug info
-CFLAGS 		+= -Os -g3
+CFLAGS 		+= -Og -g3
 
 # Link time optimization
 CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
@@ -65,7 +65,20 @@ CFLAGS 		+= -Wa,--flix
 #-----------------------------------------------------------------------------------------------------------------------
 
 SRCS 		:= $(shell find src -name '*.c')
-SRCS 		+= $(shell find src -name '*.S')
+
+#
+# LittleFS driver
+#
+
+SRCS 		+= ../lib/littlefs/lfs.c
+SRCS 		+= ../lib/littlefs/lfs_util.c
+CFLAGS 		+= -I../lib/littlefs
+
+# we don't have malloc in the loader
+CFLAGS		+= -DLFS_NO_MALLOC
+
+# we are readonly in the loader
+CFLAGS 		+=  -DLFS_READONLY
 
 ########################################################################################################################
 # Targets
@@ -81,8 +94,9 @@ DEPS := $(OBJS:%.o=%.d)
 
 $(BIN_DIR)/loader.bin: $(BIN_DIR)/loader.elf
 	@echo ESPTOOL ELF2IMAGE $@
-	@$(ESPTOOL) --chip esp32 --trace elf2image --output $@ --version 3 --min-rev 3 --flash_freq 40m --flash_mode dio --flash_size 16MB $^
-	@test `wc -c <$<` -gt 4096
+	@$(ESPTOOL) --chip esp32 --trace elf2image --output $(BUILD_DIR)/loader.bin --version 3 --min-rev 3 --flash_freq 40m --flash_mode dio --flash_size 16MB $^
+	@test `wc -c <$(BUILD_DIR)/loader.bin` -lt 12288
+	@cp $(BUILD_DIR)/loader.bin $@
 
 $(BIN_DIR)/loader.elf: $(OBJS)
 	@echo LD $@

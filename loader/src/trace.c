@@ -39,3 +39,8 @@ void trace_hex(const void* _data, size_t size) {
         }
     }
 }
+
+void __assert_func(const char* filename, int line, const char* func, const char* expression) {
+    ERROR("Assert `%s` failed at %s (%s:%d)", expression, func, filename, line);
+    while(1);
+}

@@ -21,12 +21,15 @@ data. It takes about 72KB.
 The loader needs to respect both the kernel and the bootrom memory ranges, and its main
 goal is to essentially setup a nice environment for the kernel to start in.
 
-Because the kernel uses SRAM 1 exclusively we are going to need and load our loader into SRAM 0/SRAM 2.
+For the loader:
+- 0x4008_0000 - 0x4009_FFFF: Loader code
+- 0x3FFC_0000 - 0x3FFD_0000: Loader data
+- 0x3FFD_0000 - 0x3FFE_0000: Temp buffer
 
-For the data we are going to load at the last 128KB of SRAM 2, which is placed at 0x3FFC_0000 - 0x3FFD_FFFF.
-
-For the code we are going to load at the last 128KB of SRAM 1, mainly to avoid the area where 
-the cache is at because I do not know how the bootrom initializes it.
+The main problem is the collision between the kernel data and the bootrom using both 
+the SRAM 1 data range, to avoid having problems when loading the kernel we will read 
+everything to a temp buffer, and then we will copy from there to the real range, once
+we are sure that we don't need the bootrom anymore.
 
 ## Kernel
 

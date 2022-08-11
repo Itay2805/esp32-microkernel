@@ -6,7 +6,7 @@
 # The targets to combine it all
 #-----------------------------------------------------------------------------------------------------------------------
 
-.PHONY: all clean fetch-toolchain loader kernel
+.PHONY: all clean fetch-toolchain loader kernel rootfs
 
 # Build all the targets
 all: out/image.bin
@@ -25,17 +25,23 @@ fetch-toolchain:
 # Combine everything into a nice image
 #-----------------------------------------------------------------------------------------------------------------------
 
-out/image.bin: loader kernel
+out/image.bin: loader rootfs
 	@mkdir -p $(@D)
+
+	# set the loader at the start and resize it nicely
 	rm -rf $@
 	dd if=loader/out/bin/loader.bin of=$@ bs=1 seek=4k
-	dd if=kernel/out/bin/kernel.bin of=$@ bs=1 seek=8K
+	truncate -s 16K $@
+
+	# put the rootfs afterwards
+	cat out/rootfs.bin >> $@
+
+	# create a version with a full size image
 	cp $@ $@.full
 	truncate -s 16M $@.full
 
-#-----------------------------------------------------------------------------------------------------------------------
-# Wrap our kernel and loader targets
-#-----------------------------------------------------------------------------------------------------------------------
+rootfs: kernel
+	./scripts/create_rootfs.py
 
 loader:
 	$(MAKE) -C loader
@@ -57,7 +63,6 @@ run: all
 			--chip esp32 \
 			--before default_reset \
 			--after hard_reset \
-			--no-stub \
 			write_flash \
 			0 \
 			out/image.bin
@@ -74,7 +79,7 @@ qemu-debug: all
 
 qemu: all
 	 $(QEMU) \
-		-machine esp32 \
+		 --trace "*mtd*" -machine esp32 \
 		-serial stdio \
 		-monitor telnet:localhost:1235,server,nowait \
 		-drive file=out/image.bin.full,if=mtd,format=raw \
