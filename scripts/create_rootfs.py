@@ -24,6 +24,7 @@ def copy_file(orig, to):
 # Place all the apps
 #
 fs.mkdir('/apps')
+copy_file('apps/init/out/bin/init.bin', '/apps/init')
 
 #
 # Place the kernel in the root folder

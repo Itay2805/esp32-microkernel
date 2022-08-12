@@ -393,7 +393,10 @@ common_exception_entry:
     // restore the context that we saved
     call0 restore_full_interrupt_context
 
-    // TODO: confirm PID
+    // confirm PID
+    movi a0, PIDCTRL_PID_CONFIRM
+    movi a2, 1
+    s32i a2, a0, 0
 
     // finish up by restoring a0-a2 and finally
     // return from the exception, a1 must be restored
@@ -432,7 +435,10 @@ common_interrupt_entry:
     // restore the context that we saved
     call0 restore_full_interrupt_context
 
-    // TODO: confirm PID
+    // confirm PID
+    movi a0, PIDCTRL_PID_CONFIRM
+    movi a2, 1
+    s32i a2, a0, 0
 
     // finish up by restoring a0-a2 and finally
     // return from the exception, a1 must be restored
@@ -510,7 +516,10 @@ syscall_entry:
     call0 restore_full_interrupt_context
 
 .return_from_syscall:
-    // TODO: confirm PID
+    // confirm PID
+    movi a0, PIDCTRL_PID_CONFIRM
+    movi a2, 1
+    s32i a2, a0, 0
 
     // finish up by restoring a0-a2 and finally
     // return from the exception, a1 must be restored

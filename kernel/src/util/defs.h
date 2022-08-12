@@ -25,6 +25,19 @@ typedef char symbol_t[];
         (__typeof(x))(_x - (_x & (_align - 1))); \
     })
 
+#define MINU(a, b) \
+    ({ \
+        uint32_t __b = (b); \
+        uint32_t __a = (a); \
+        uint32_t __res; \
+        asm ( \
+            "MINU %0, %1, %2" \
+            : "=r"(__res) \
+            : "r"(__a), "r"(__b) \
+        ); \
+        __res; \
+    })
+
 #define FOR_EACH_BIT(num, it) \
     if (num != 0) \
         for( \

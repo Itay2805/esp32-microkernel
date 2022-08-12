@@ -24,7 +24,7 @@ CFLAGS 		+= -Wno-address-of-packed-member
 CFLAGS 		+= -Wno-psabi
 
 # Size optimization, include debug info
-CFLAGS 		+= -Og -g3
+CFLAGS 		+= -Os -g3
 
 # Link time optimization
 CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
@@ -39,7 +39,7 @@ CFLAGS		+= -nostdlib
 CFLAGS		+= -Tlinker.ld
 
 # Include the lib and kernel folders in include path
-CFLAGS 		+= -Isrc
+CFLAGS 		+= -Isrc -I../kernel/src
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Target specific stuff
@@ -59,6 +59,10 @@ CFLAGS 		+= -mtarget-align
 
 # Allow VLIW
 CFLAGS 		+= -Wa,--flix
+
+# Tells the assembler that a long call may be needed, it does not seem
+# to affect code gen too much with lto
+CFLAGS 		+= -mlongcalls
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Sources

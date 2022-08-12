@@ -10,6 +10,8 @@
 #include "drivers/timg.h"
 #include "drivers/uart.h"
 #include "task/scheduler.h"
+#include "initrd.h"
+#include "task/loader.h"
 
 /**
  * The stacks for each cpu
@@ -30,18 +32,17 @@ void* g_kernel_stacks[2] = {
     g_app_cpu_stack + sizeof(g_app_cpu_stack),
 };
 
-static void dummy() {
-    TRACE("Hello from task `%s`!", get_current_task()->ucontext->name);
-    scheduler_park(NULL, NULL);
-    while(1);
-}
-
-static err_t setup_init(int a) {
+static err_t load_from_initrd() {
     err_t err = NO_ERROR;
 
-    task_t* task = create_task(dummy, "my task %d", a);
-    CHECK(task != NULL);
-    scheduler_ready_task(task);
+    initrd_header_t* header = (initrd_header_t*)0x3FFC2000;
+    TRACE("Loading from initrd (%d entries)", header->count);
+
+    initrd_entry_t* entry = (initrd_entry_t*)(header + 1);
+    for (int i = 0; i < header->count; i++, entry = INITRD_NEXT_ENTRY(entry)) {
+        TRACE("\tLoading %s - %d bytes", entry->name, entry->size);
+        CHECK_AND_RETHROW(loader_load_app(entry->name, entry + 1, entry->size));
+    }
 
 cleanup:
     return err;
@@ -88,9 +89,8 @@ void kmain() {
     // sync all these configurations
     __rsync();
 
-    // setup the init task
-    CHECK_AND_RETHROW(setup_init(1));
-    CHECK_AND_RETHROW(setup_init(2));
+    // setup all the first tasks
+    CHECK_AND_RETHROW(load_from_initrd());
 
     // init scheduler
     CHECK_AND_RETHROW(init_wdt());

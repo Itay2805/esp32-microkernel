@@ -48,14 +48,24 @@ void init_pid() {
 
     // set the pid interrupt tracking for all 7 levels
     PIDCTRL_INTERRUPT_ENABLE = 0b11111110;
+
+    // set the delay, this was calculated exactly as needed
+    PIDCTRL_PID_DELAY = 0;
+
+    // setup the pids
+    pid_binding_t* binding = get_cpu_context()->pid_bindings;
+    for (int i = 0; i < PID_BINDING_COUNT; i++) {
+        binding[i].pid = i + 2;
+    }
 }
 
-void pid_prepare() {
+__attribute__((noinline)) void pid_prepare() {
     // get the pid that we want to switch to
     int current_pid = get_cpu_context()->primary_binding->pid;
 
     // set it
     PIDCTRL_PID_NEW_REG = current_pid;
+    PIDCTRL_PID_CONFIRM = 1;
 }
 
 bool pid_binding_is_primary(pid_binding_t* binding) {
@@ -78,11 +88,12 @@ void pid_binding_bind(pid_binding_t* binding, mmu_t* space) {
     binding->bound_space = space;
 
     // remove the entries of the old state
-    if (unbound_space) {
+    if (unbound_space != NULL) {
         mmu_unload(unbound_space);
     }
 
     // set the entries of the new state
+    space->binding = binding;
     mmu_load(space);
 
     // set the primary space and the binding stamp
@@ -93,6 +104,7 @@ void pid_binding_bind(pid_binding_t* binding, mmu_t* space) {
 void pid_binding_unbind(pid_binding_t* binding) {
     // remove the entries for this space
     mmu_unload(binding->bound_space);
+    binding->bound_space->binding = NULL;
 
     // set the unbound space
     binding->bound_space = NULL;

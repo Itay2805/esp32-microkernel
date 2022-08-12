@@ -30,19 +30,37 @@ print(f'MAC: {":".join(map(lambda x: "%02x" % x, esp.read_mac()))}')
 #
 esp: ESP32ROM = esp.run_stub()
 
+
+def write_flash(offset, data):
+    # Setup for flashing
+    esp.flash_begin(len(data), offset)
+
+    seq = 0
+    while len(data) != 0:
+        # get and pad the block
+        block = data[:esp.FLASH_WRITE_SIZE]
+        block = block + b'\xFF' * (esp.FLASH_WRITE_SIZE - len(data))
+
+        # Send it
+        esp.flash_block(block, seq)
+
+        # Next step
+        data = data[esp.FLASH_WRITE_SIZE:]
+        seq += 1
+
+    # Stub only writes each block to flash after 'ack'ing the receive,
+    # so do a final dummy operation which will not be 'ack'ed
+    # until the last block has actually been written out to flash
+    esp.read_reg(ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR)
+
+
+# write the loader
+write_flash(4096, open('loader/out/bin/loader.bin', 'rb').read())
+
+
 # The offset from the start of the flash (in blocks) where
 # the filesystem is located at
 ON_FLASH_BLOCK_OFFSET = 4
-
-
-@dataclass
-class FlashEntry:
-    start: int
-    data: bytearray
-
-    @property
-    def end(self):
-        return self.start + len(self.data) - 1
 
 
 class EspLfsContext(lfs.UserContext):
@@ -78,27 +96,7 @@ class EspLfsContext(lfs.UserContext):
     def _sync_range(self, offset, data):
         print(f"SYNC CHUNK {offset:x}-{offset + len(data):x}")
         offset = offset + (ON_FLASH_BLOCK_OFFSET * 4096)
-
-        # Setup for flashing
-        esp.flash_begin(len(data), offset)
-
-        seq = 0
-        while len(data) != 0:
-            # get and pad the block
-            block = data[:esp.FLASH_WRITE_SIZE]
-            block = block + b'\xFF' * (esp.FLASH_WRITE_SIZE - len(data))
-
-            # Send it
-            esp.flash_block(block, seq)
-
-            # Next step
-            data = data[esp.FLASH_WRITE_SIZE:]
-            seq += 1
-
-        # Stub only writes each block to flash after 'ack'ing the receive,
-        # so do a final dummy operation which will not be 'ack'ed
-        # until the last block has actually been written out to flash
-        esp.read_reg(ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR)
+        write_flash(offset, data)
 
     def sync(self, cfg: lfs.LFSConfig) -> int:
         return 0
@@ -130,7 +128,6 @@ class EspLfsContext(lfs.UserContext):
         print("SYNC END")
 
         self._flash = [None] * 16 * 1024 * 1024
-
 
 try:
     ctx = EspLfsContext()

@@ -5,8 +5,8 @@
 
 #include <stddef.h>
 
-#define USER_CODE_BASE      ((void*)0x40080000)
-#define USER_DATA_BASE      ((void*)0x3FFC0000)
+#define USER_CODE_BASE      (0x40080000)
+#define USER_DATA_BASE      (0x3FFC0000)
 
 #define USER_PAGE_SIZE           SIZE_8KB
 

@@ -4,6 +4,7 @@
 #include "trace.h"
 #include "rom.h"
 #include "lfs.h"
+#include "initrd.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper macros
@@ -56,6 +57,11 @@ typedef void (*kernel_entry_func_t)();
  */
 static void* m_temp_buffer = (void*) 0x3FFD0000;
 
+/**
+ * The buffer for the initrd
+ */
+static void* m_initrd_buffer = (void*) 0x3FFC2000;
+
 int spi_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
     ASSERT((off % 4) == 0);
     ASSERT((size % 4) == 0);
@@ -100,34 +106,48 @@ static void disable_watchdogs() {
     RTC_CNTL_WDTCONFIG0 = 0;
 }
 
-void _start() {
-    disable_watchdogs();
+static void load_initrd_file(const char* name, initrd_entry_t* entry) {
+    // open the kernel file
+    lfs_file_t file;
+    struct lfs_info file_info;
+    struct lfs_file_config file_config = {
+        .buffer = (char[256]){}
+    };
+    ASSERT(lfs_stat(&m_lfs, name, &file_info) == 0);
+    TRACE("\tLoading %s (%d bytes)", name, file_info.size);
+    entry->size = file_info.size;
 
-    uint8_t b;
-    while (uart_rx_one_char(&b) != 0) {}
+    const char* filename = strrchr(name, '/');
+    if (filename == NULL) {
+        filename = name;
+    } else {
+        filename++;
+    }
+    strcpy(entry->name, filename);
 
-    TRACE("Welcome from the loader!");
+    ASSERT(lfs_file_opencfg(&m_lfs, &file, name, LFS_O_RDONLY, &file_config) == 0);
+    ASSERT(lfs_file_read(&m_lfs, &file, entry + 1, file_info.size) == file_info.size);
+}
 
-    TRACE("\tConfiguring flash");
-    esp_rom_spiflash_attach(0, false);
-    ASSERT(esp_rom_spiflash_config_param(
-            0,
-            16 * 0x100000,
-            0x10000,
-            0x1000,
-            0x100,
-            0xffff
-    ) == 0);
+static void load_initrd() {
+    TRACE("Loading initrd");
+    // we only have one module for now
+    initrd_header_t* header = m_initrd_buffer;
+    header->count = 1;
+    initrd_entry_t* entry = (initrd_entry_t*)(header + 1);
 
-    TRACE("\tMounting rootfs");
-    ASSERT(lfs_mount(&m_lfs, &m_lfs_config) == 0);
+    // firstly load the init module
+    load_initrd_file("/apps/init", entry);
+    entry = INITRD_NEXT_ENTRY(entry);
+}
 
+static void load_kernel() {
     TRACE("Loading kernel");
 
     // open the kernel file
     lfs_file_t kernel_file;
     struct lfs_file_config kernel_file_config = {
-        .buffer = (char[256]){}
+            .buffer = (char[256]){}
     };
     ASSERT(lfs_file_opencfg(&m_lfs, &kernel_file, "/kernel", LFS_O_RDONLY, &kernel_file_config) == 0);
 
@@ -178,5 +198,32 @@ void _start() {
         :
         : "r"(kernel_header.entry_point)
     );
+}
+
+void _start() {
+    disable_watchdogs();
+
+    uint8_t b;
+    while (uart_rx_one_char(&b) != 0) {}
+
+    TRACE("Welcome from the loader!");
+
+    TRACE("\tConfiguring flash");
+    esp_rom_spiflash_attach(0, false);
+    ASSERT(esp_rom_spiflash_config_param(
+            0,
+            16 * 0x100000,
+            0x10000,
+            0x1000,
+            0x100,
+            0xffff
+    ) == 0);
+
+    TRACE("\tMounting rootfs");
+    ASSERT(lfs_mount(&m_lfs, &m_lfs_config) == 0);
+
+    load_initrd();
+    load_kernel();
+
     while(1);
 }

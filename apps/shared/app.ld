@@ -27,7 +27,7 @@ SECTIONS {
 
     .text : {
         /* create the kernel header */
-        LONG(0x4c4e524b);    /* magic */
+        LONG(0x20505041);    /* magic */
         LONG(SIZEOF(.text)); /* code size */
         LONG(SIZEOF(.data)); /* data size */
         LONG(SIZEOF(.bss));  /* bss size */

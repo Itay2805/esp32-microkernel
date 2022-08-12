@@ -1,5 +1,7 @@
 #include "task.h"
 #include "mem/umem.h"
+#include "vdso/vdso.h"
+#include "drivers/pid.h"
 
 #include <util/string.h>
 
@@ -93,9 +95,13 @@ task_t* create_task(void* entry, const char* fmt, ...) {
 
     // allocate the uctx
     int uctx_page = umem_alloc_data_page();
-    mmu_map_code(&task->mmu, MMU_SPACE_DATA, UCTX_PAGE_INDEX, MMU_SPACE_ENTRY(uctx_page));
+    if (uctx_page == -1) {
+        free(task);
+        return NULL;
+    }
+    mmu_map(&task->mmu, MMU_SPACE_DATA, UCTX_PAGE_INDEX, PAGE_ENTRY(uctx_page));
 
-    task->ucontext = DATA_PAGE_ADDR(uctx_page);
+    task->ucontext = (task_ucontext_t*)DATA_PAGE_ADDR(uctx_page);
     memset(task->ucontext, 0, sizeof(task_ucontext_t));
 
     // setup the user context
@@ -105,7 +111,8 @@ task_t* create_task(void* entry, const char* fmt, ...) {
         .um = 1,
         .woe = 1
     };
-    task->ucontext->regs.pc = (uintptr_t)entry;
+    task->ucontext->regs.pc = (uintptr_t)task_trampoline;
+    task->ucontext->regs.ar[2] = (uintptr_t)entry;
 
     // set the SP to be the end of the stack, which is at the ucontext
     // area at the end
@@ -158,5 +165,9 @@ void save_task_context(task_t* task, task_regs_t* regs) {
 }
 
 void restore_task_context(task_t* task, task_regs_t* regs) {
+    // copy the registers
     *regs = task->ucontext->regs;
+
+    // activate the mmu entry
+    mmu_activate(&task->mmu);
 }

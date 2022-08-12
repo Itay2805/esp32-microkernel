@@ -146,6 +146,9 @@ static void execute(task_regs_t* ctx, task_t* task) {
 
     // set the gprs context
     restore_task_context(task, ctx);
+
+    // prepare for the switch
+    pid_prepare();
 }
 
 static void save_current_task(task_regs_t* ctx, bool park) {

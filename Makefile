@@ -15,6 +15,7 @@ all: out/image.bin
 clean:
 	$(MAKE) -C loader clean
 	$(MAKE) -C kernel clean
+	$(MAKE) -C apps/init clean
 	rm -rf out
 
 # Fetch the toolchain for the given target
@@ -40,7 +41,7 @@ out/image.bin: loader rootfs
 	cp $@ $@.full
 	truncate -s 16M $@.full
 
-rootfs: kernel
+rootfs: kernel init
 	./scripts/create_rootfs.py
 
 loader:
@@ -48,6 +49,9 @@ loader:
 
 kernel:
 	$(MAKE) -C kernel
+
+init:
+	$(MAKE) -C apps/init
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Target specific stuff

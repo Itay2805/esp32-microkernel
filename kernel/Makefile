@@ -43,7 +43,7 @@ CFLAGS		+= -nostdlib
 CFLAGS		+= -Tsrc/linker.ld
 
 # Include the lib and kernel folders in include path
-CFLAGS 		+= -Isrc
+CFLAGS 		+= -Isrc -I../apps/shared
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Target specific stuff

@@ -1,3 +1,5 @@
+# Set the name
+APP_NAME 	:= init
 
 # set the sources
 SRCS := main.c

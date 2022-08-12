@@ -2,8 +2,13 @@
 # Template for building userspace programs
 ########################################################################################################################
 
-# This folder
-APP_SHARED 		?= .
+ifndef APP_NAME
+$(error APP_NAME must be set to a unique name for the app)
+endif
+
+ifndef APP_SHARED
+$(error APP_SHARED must be set to a relative path to the app shared directory)
+endif
 
 TOOLCHAIN_PATH 	:= $(APP_SHARED)/../../toolchain
 
@@ -44,10 +49,10 @@ CFLAGS 		+= -fstrict-volatile-bitfields
 CFLAGS		+= -nostdlib
 
 # Use proper linker script
-CFLAGS		+= -T$(APP_SHARED)/linker.ld
+CFLAGS		+= -T$(APP_SHARED)/app.ld
 
 # Include the lib and kernel folders in include path
-CFLAGS 		+= -Isrc
+CFLAGS 		+= -I$(APP_SHARED)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Target specific stuff
@@ -78,24 +83,24 @@ CFLAGS 		+= -mlongcalls
 
 .PHONY: all clean
 
-all: $(BIN_DIR)/$(NAME).bin
+all: $(BIN_DIR)/$(APP_NAME).bin
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:%.o=%.d)
 -include $(DEPS)
 
-$(BIN_DIR)/$(NAME).bin: $(BUILD_DIR)/$(NAME).elf
+$(BIN_DIR)/$(APP_NAME).bin: $(BUILD_DIR)/$(APP_NAME).elf
 	@mkdir -p $(@D)
-	@echo OBJCOPY $(BUILD_DIR)/$(NAME).bin.text
-	@$(OBJCOPY) -O binary -j .text $^ $(BUILD_DIR)/$(NAME).bin.text
-	@echo OBJCOPY $(BUILD_DIR)/$(NAME).bin.data
-	@$(OBJCOPY) -O binary -j .data $^ $(BUILD_DIR)/$(NAME).bin.data
+	@echo OBJCOPY $(BUILD_DIR)/$(APP_NAME).bin.text
+	@$(OBJCOPY) -O binary -j .text $^ $(BUILD_DIR)/$(APP_NAME).bin.text
+	@echo OBJCOPY $(BUILD_DIR)/$(APP_NAME).bin.data
+	@$(OBJCOPY) -O binary -j .data $^ $(BUILD_DIR)/$(APP_NAME).bin.data
 	@echo CAT $@
 	@cat \
-		$(BUILD_DIR)/$(NAME).bin.text \
-		$(BUILD_DIR)/$(NAME).bin.data > $@
+		$(BUILD_DIR)/$(APP_NAME).bin.text \
+		$(BUILD_DIR)/$(APP_NAME).bin.data > $@
 
-$(BUILD_DIR)/$(NAME).elf: $(OBJS)
+$(BUILD_DIR)/$(APP_NAME).elf: $(OBJS)
 	@echo LD $@
 	@mkdir -p $(@D)
 	@$(LD) $(CFLAGS) -o $@ $^

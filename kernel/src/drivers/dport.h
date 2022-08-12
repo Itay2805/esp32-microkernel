@@ -62,6 +62,8 @@ typedef enum interrupt_source {
  */
 err_t dport_map_interrupt(interrupt_source_t source, bool edge_triggered);
 
+void dport_log_interrupt();
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MMU/MPU abstraction
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,27 +124,41 @@ typedef enum mpu_peripheral {
  */
 struct pid_binding;
 
+typedef enum page_entry_type {
+    /**
+     * The page is unmapped
+     */
+    PAGE_UNMAPPED = 0,
+
+    /**
+     * The paged is mapped and is in sram
+     */
+    PAGE_MAPPED = 1,
+
+    /**
+     * The page is mapped but is swapped to psram
+     */
+    PAGE_SWAPPED = 2,
+} page_entry_type_t;
+
 /**
  * Each page entry for tracking mapped pages
  */
-typedef struct mmu_space_entry {
+typedef struct page_entry {
     // the physucal page of this, either on
     // psram or in sram
-    uint8_t phys : 7;
+    uint8_t phys;
 
-    // is this page swapped out
-    uint8_t psram : 1;
-} mmu_space_entry_t;
+    // is the address mapped
+    page_entry_type_t type : 2;
+} page_entry_t;
 
 /**
  * a single address space, either code or data
  */
 typedef struct mmu_space {
     // virtual->physical
-    mmu_space_entry_t entries[16];
-
-    // which immu pages are mapped
-    uint16_t mapped;
+    page_entry_t entries[16];
 } mmu_space_t;
 
 /**
@@ -166,7 +182,7 @@ typedef struct mmu {
 /**
  * Initialize MMU stuff
  */
-void init_mmu();
+err_t init_mmu();
 
 /**
  * The page for the code pages index
@@ -178,9 +194,9 @@ typedef enum mmu_space_type {
     MMU_SPACE_DATA,
 } mmu_space_type_t;
 
-#define MMU_SPACE_ENTRY(page) ((mmu_space_entry_t){ .phys = (page) })
+#define PAGE_ENTRY(page) ((page_entry_t){ .phys = (page), .type = PAGE_MAPPED })
 
-err_t mmu_map_code(mmu_t* mmu, mmu_space_type_t type, uint8_t virt, mmu_space_entry_t entry);
+err_t mmu_map(mmu_t* mmu, mmu_space_type_t type, uint8_t virt, page_entry_t entry);
 
 /**
  * Activate the given MMU range

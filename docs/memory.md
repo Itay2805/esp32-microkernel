@@ -22,9 +22,13 @@ The loader needs to respect both the kernel and the bootrom memory ranges, and i
 goal is to essentially setup a nice environment for the kernel to start in.
 
 For the loader:
-- 0x4008_0000 - 0x4009_FFFF: Loader code
-- 0x3FFC_0000 - 0x3FFD_0000: Loader data
-- 0x3FFD_0000 - 0x3FFE_0000: Temp buffer
+- 0x4008_0000 - 0x4009_FFFF (128K): Loader code
+- 0x3FFC_0000 - 0x3FFC_1FFF (8K): Loader data
+- 0x3FFC_2000 - 0x3FFC_FFFF (56K): initrd
+- 0x3FFD_0000 - 0x3FFD_FFFF (64K): Temp buffer
+
+*TODO: currently we have a huge overkill on the loader code, maybe we 
+       can use this for something else*
 
 The main problem is the collision between the kernel data and the bootrom using both 
 the SRAM 1 data range, to avoid having problems when loading the kernel we will read 
@@ -41,10 +45,8 @@ For the kernel mode we have a very defined memory map.
 |-------------------|-----------------------------|---------|---------------|
 | SRAM 2            | 0x3FFA_E000 - 0x3FFB_FFFF   | 72KB    | Kernel heap   |
 | SRAM 2            | 0x3FFC_0000 - 0x3FFD_FFFF   | 128KB   | User data     |
-| ----------------- | --------------------------- | ------- | ------------- |
 | SRAM 1            | 0x3FFE_0000 - 0x3FFF_FFFF   | 128KB   | Kernel Data   |
 | SRAM 1            | 0x400A_0000 - 0x400B_FFFF   | 128KB   | Kernel Code   |
-| ----------------- | --------------------------- | ------- | ------------- |
 | SRAM 0            | 0x4007_0000 - 0x4007_FFFF   | 64KB    | Cache         | 
 | SRAM 0            | 0x4008_0000 - 0x4009_FFFF   | 128KB   | User Code     |
 

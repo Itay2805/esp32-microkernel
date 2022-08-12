@@ -18,6 +18,16 @@ typedef enum err {
      * Could not allocate the requested resource
      */
     ERROR_OUT_OF_RESOURCES,
+
+    /**
+     * The given pointer was invalid
+     */
+    ERROR_INVALID_PTR,
+
+    /**
+     * The given syscall was invalid
+     */
+    ERROR_INVALID_SYSCALL,
 } err_t;
 
 #define IS_ERROR(x) ((x) != 0)

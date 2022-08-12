@@ -37,6 +37,7 @@ strspn = 0x4000c648;
 strcspn = 0x4000c558;
 strchr = 0x4000c53c;
 strcpy = 0x400013ac;
+strrchr = 0x40001708;
 printf = ets_printf;
 __umoddi3 = 0x4000d280;
 __udivdi3 = 0x4000cff8;
