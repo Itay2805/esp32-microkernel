@@ -179,19 +179,9 @@ try:
             with rfs.open(path, 'rb') as f:
                 file_data = f.read()
 
-            diff = True
-            try:
-                # Try to read and see if there are diffs
-                with fs.open(path, 'rb') as f:
-                    curr_data = f.read()
-                diff = curr_data != file_data
-            except littlefs.LittleFSError:
-                pass
-
             # Now write it
-            if diff:
-                with fs.open(path, 'wb') as f:
-                    f.write(file_data)
+            with fs.open(path, 'wb') as f:
+                f.write(file_data)
 
         else:
             assert False, "Unknown file type"

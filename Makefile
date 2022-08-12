@@ -55,9 +55,12 @@ kernel:
 
 TOOLCHAIN_PATH	:= toolchain
 include toolchain/esptool.mk
-
+include toolchain/toolchain.mk
 
 QEMU			?= /home/tomato/checkouts/esp_qemu/build/qemu-system-xtensa
+
+objdump: kernel
+	$(OBJDUMP) -d kernel/out/build/kernel.elf > kernel.S
 
 run: all
 	./scripts/run_esp32.py

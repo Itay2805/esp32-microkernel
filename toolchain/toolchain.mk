@@ -11,3 +11,4 @@ PREFIX						:= $(TOOLCHAIN_PATH)/$(TOOLCHAIN_TARGET)/bin/$(TOOLCHAIN_TARGET)-
 CC 							:= $(PREFIX)gcc
 LD							:= $(PREFIX)gcc
 OBJCOPY						:= $(PREFIX)objcopy
+OBJDUMP						:= $(PREFIX)objdump
