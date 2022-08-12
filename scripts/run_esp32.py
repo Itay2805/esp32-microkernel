@@ -141,8 +141,11 @@ try:
         cache_size=256,
         lookahead_size=16,
         prog_size=256,
-        read_size=4
+        read_size=4,
+        mount=False
     )
+    fs.format()
+    fs.mount()
 
     rfs = LittleFS(
         block_count=4096-4,
