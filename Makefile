@@ -56,16 +56,11 @@ kernel:
 TOOLCHAIN_PATH	:= toolchain
 include toolchain/esptool.mk
 
+
 QEMU			?= /home/tomato/checkouts/esp_qemu/build/qemu-system-xtensa
 
 run: all
-	$(ESPTOOL) \
-			--chip esp32 \
-			--before default_reset \
-			--after hard_reset \
-			write_flash \
-			0 \
-			out/image.bin
+	./scripts/run_esp32.py
 
 qemu-debug: all
 	 $(QEMU) \
