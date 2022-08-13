@@ -18,10 +18,12 @@ _start:
     // set the interrupt vector
     movi a0, vecbase
     wsr.vecbase a0
+    rsync
 
     // clear loop count
     movi a0, 0
     wsr.lcount a0
+    rsync
 
     // set the stack and enable register window, we are going to use
     // the app cpu stack for now, just so we will not have a shared stack

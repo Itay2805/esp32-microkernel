@@ -64,7 +64,11 @@ extern volatile uint32_t DPORT_AHB_MPU_TABLE[2];
 extern volatile uint32_t DPORT_AHBLITE_MPU_TABLE[MPU_LAST];
 extern volatile DPORT_MMU_TABLE_REG DPORT_IMMU_TABLE[16];
 extern volatile DPORT_MMU_TABLE_REG DPORT_DMMU_TABLE[16];
-extern volatile uint32_t DPORT_MMU_IA_INT_EN_REG;
+
+extern volatile uint32_t DPORT_PRO_VECBASE_CTRL_REG;
+extern volatile uint32_t DPORT_PRO_VECBASE_SET_REG;
+extern volatile uint32_t DPORT_APP_VECBASE_CTRL_REG;
+extern volatile uint32_t DPORT_APP_VECBASE_SET_REG;
 
 // APP_CPU controller registers
 
@@ -77,6 +81,8 @@ extern volatile uint32_t DPORT_MMU_IA_INT_EN_REG;
 //----------------------------------------------------------------------------------------------------------------------
 // Initialization
 //----------------------------------------------------------------------------------------------------------------------
+
+extern symbol_t vecbase;
 
 void init_dport() {
     // set no remapping for both cpus
@@ -117,6 +123,15 @@ void init_dport() {
     for (int i = 0; i < 4; i++) {
         DPORT_INTR_FROM_CPU[i] = 0;
     }
+
+    // setup the vecbase in the dport and tell the cpu to use that,
+    // this should prevent the user from being able to change the
+    // vecbase on its own.
+    ASSERT(((uint32_t)vecbase & ((1 << 10) - 1)) == 0);
+    DPORT_PRO_VECBASE_SET_REG = (uint32_t)vecbase >> 10;
+    DPORT_PRO_VECBASE_CTRL_REG |= 0b11;
+    DPORT_APP_VECBASE_SET_REG = (uint32_t)vecbase >> 10;
+    DPORT_APP_VECBASE_CTRL_REG |= 0b11;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -165,21 +180,12 @@ cleanup:
     return err;
 }
 
-#define DR_REG_DPORT_BASE                       0x3ff00000
-#define DPORT_MEM_ACCESS_DBUG0_REG          (DR_REG_DPORT_BASE + 0x3E8)
-#define DPORT_MEM_ACCESS_DBUG1_REG          (DR_REG_DPORT_BASE + 0x3EC)
-
 void dport_log_interrupt() {
-    TRACE("DPORT_MEM_ACCESS_DBUG0_REG=%x", *(volatile uint32_t*)(DPORT_MEM_ACCESS_DBUG0_REG));
-    TRACE("DPORT_MEM_ACCESS_DBUG1_REG=%x", *(volatile uint32_t*)(DPORT_MEM_ACCESS_DBUG1_REG));
-
+    TRACE("Interrupts:");
     for (int i = 0; i < INTERRUPT_SOURCE_MAX; i++) {
         if (DPORT_PRO_INTR_STATUS[i / 32] & (1 << (i % 32))) {
             switch (i) {
-                case MMU_IA_INT: TRACE("Got interrupt: MMU_IA_INT"); break;
-                case MPU_IA_INT: TRACE("Got interrupt: MPU_IA_INT"); break;
-                case CACHE_IA_INT: TRACE("Got interrupt: CACHE_IA_INT"); break;
-                default: WARN("Got interrupt: #%d", i); break;
+                default: WARN("\tGot interrupt: #%d", i); break;
             }
         }
     }
@@ -227,13 +233,8 @@ err_t init_mmu() {
 
     // config both IMMU and DMMU with 8kb pages
     // also need to enable the first bit to enable the mmu
-    DPORT_IMMU_PAGE_MODE = BIT0 | 0;
-    DPORT_DMMU_PAGE_MODE = BIT0 | 0;
-
-    // from the esp-idf this register seems to exist, but I can't find
-    // anything else about it
-    DPORT_MMU_IA_INT_EN_REG = BIT0;
-    CHECK_AND_RETHROW(dport_map_interrupt(MMU_IA_INT, false));
+    DPORT_IMMU_PAGE_MODE = 0;
+    DPORT_DMMU_PAGE_MODE = 0;
 
     // setup the vdso page, it is always mapped at the last page
     // of the usermode area, and is available to all the pages
@@ -283,7 +284,7 @@ err_t mmu_map(mmu_t* mmu, mmu_space_type_t type, uint8_t virt, page_entry_t entr
     CHECK(virt < MAX_PAGE_COUNT);
 
     // map it
-    mmu_space_t* space = type == MMU_SPACE_INST ? &mmu->immu : &mmu->dmmu;
+    mmu_space_t* space = type == MMU_SPACE_CODE ? &mmu->immu : &mmu->dmmu;
     space->entries[virt] = entry;
 
     // if the process is running, update the mmu itself

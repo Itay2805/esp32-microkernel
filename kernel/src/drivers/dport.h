@@ -190,7 +190,7 @@ err_t init_mmu();
 #define MAX_PAGE_COUNT  16
 
 typedef enum mmu_space_type {
-    MMU_SPACE_INST,
+    MMU_SPACE_CODE,
     MMU_SPACE_DATA,
 } mmu_space_type_t;
 

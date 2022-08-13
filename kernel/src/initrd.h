@@ -7,6 +7,7 @@
  * The initrd header
  */
 typedef struct initrd_header {
+    size_t total_size;
     uint8_t count;
 } initrd_header_t;
 

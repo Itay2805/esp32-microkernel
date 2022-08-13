@@ -91,12 +91,15 @@ DEPS := $(OBJS:%.o=%.d)
 
 $(BIN_DIR)/$(APP_NAME).bin: $(BUILD_DIR)/$(APP_NAME).elf
 	@mkdir -p $(@D)
+	@echo OBJCOPY $(BUILD_DIR)/$(APP_NAME).bin.header
+	@$(OBJCOPY) -O binary -j .header $^ $(BUILD_DIR)/$(APP_NAME).bin.header
 	@echo OBJCOPY $(BUILD_DIR)/$(APP_NAME).bin.text
 	@$(OBJCOPY) -O binary -j .text $^ $(BUILD_DIR)/$(APP_NAME).bin.text
 	@echo OBJCOPY $(BUILD_DIR)/$(APP_NAME).bin.data
 	@$(OBJCOPY) -O binary -j .data $^ $(BUILD_DIR)/$(APP_NAME).bin.data
 	@echo CAT $@
 	@cat \
+		$(BUILD_DIR)/$(APP_NAME).bin.header \
 		$(BUILD_DIR)/$(APP_NAME).bin.text \
 		$(BUILD_DIR)/$(APP_NAME).bin.data > $@
 

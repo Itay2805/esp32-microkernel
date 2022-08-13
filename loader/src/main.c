@@ -139,6 +139,10 @@ static void load_initrd() {
     // firstly load the init module
     load_initrd_file("/apps/init", entry);
     entry = INITRD_NEXT_ENTRY(entry);
+
+    // set the total size
+    header->total_size = (uintptr_t)entry - (uintptr_t)header;
+    TRACE("Total size: %d bytes", header->total_size);
 }
 
 static void load_kernel() {

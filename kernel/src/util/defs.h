@@ -27,8 +27,8 @@ typedef char symbol_t[];
 
 #define MINU(a, b) \
     ({ \
-        uint32_t __b = (b); \
         uint32_t __a = (a); \
+        uint32_t __b = (b); \
         uint32_t __res; \
         asm ( \
             "MINU %0, %1, %2" \

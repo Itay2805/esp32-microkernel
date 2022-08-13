@@ -15,6 +15,7 @@ ENTRY(_start)
  * the total size is 128K we will separate it half and half
  */
 MEMORY {
+    DUMMY (R)       : ORIGIN = 0x00000000, len = 128K
     IRAM (RX)       : ORIGIN = 0x40080000, len = 128K
     DRAM (RW)       : ORIGIN = 0x3FFC0000, len = 128K
 }
@@ -25,16 +26,16 @@ MEMORY {
 
 SECTIONS {
 
-    .text : {
+    .header : {
         /* create the kernel header */
         LONG(0x20505041);    /* magic */
         LONG(SIZEOF(.text)); /* code size */
         LONG(SIZEOF(.data)); /* data size */
         LONG(SIZEOF(.bss));  /* bss size */
         LONG(_start);        /* entry pointer */
+    } > DUMMY
 
-        /* now have the kernel code */
-        . = ALIGN(16);
+    .text : {
         *(.text .text.*)
         . = ALIGN(4);
     } > IRAM
@@ -42,10 +43,10 @@ SECTIONS {
     .data : {
         *(.rodata .rodata.*)
         *(.data .data.*)
-        *(COMMON)
     } > DRAM
 
     .bss : {
         *(.bss .bss.*)
+        *(COMMON)
     } > DRAM
 }

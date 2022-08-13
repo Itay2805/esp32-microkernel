@@ -7,6 +7,8 @@
 #define WARN(fmt, ...) printf("[!] " fmt "\n\r", ## __VA_ARGS__)
 #define DEBUG(fmt, ...) printf("[?] " fmt "\n\r", ## __VA_ARGS__)
 
+void trace_hex(const void* _data, size_t size);
+
 #define ASSERT(check) \
     if (!(check)) { \
        ERROR("Assert `%s` failed at %s (%s:%d)", #check, __FUNCTION__, __FILE__, __LINE__); \

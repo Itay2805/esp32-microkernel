@@ -103,8 +103,6 @@ void common_interrupt_handler(task_regs_t* regs) {
     if (wdt_handle()) {
         scheduler_on_schedule(regs);
     } else {
-        task_regs_dump(regs);
         dport_log_interrupt();
-        while(1);
     }
 }

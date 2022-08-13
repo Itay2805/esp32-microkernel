@@ -65,7 +65,6 @@ __attribute__((noinline)) void pid_prepare() {
 
     // set it
     PIDCTRL_PID_NEW_REG = current_pid;
-    PIDCTRL_PID_CONFIRM = 1;
 }
 
 bool pid_binding_is_primary(pid_binding_t* binding) {

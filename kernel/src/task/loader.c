@@ -23,20 +23,6 @@ err_t loader_load_app(const char* name, void* app, size_t app_size) {
     task_t* task = create_task((void*)header->entry, name);
     CHECK_ERROR(task != NULL, ERROR_OUT_OF_RESOURCES);
 
-    mmu_activate(&task->mmu);
-#define DR_REG_DPORT_BASE                       0x3ff00000
-#define DPORT_MEM_ACCESS_DBUG0_REG          (DR_REG_DPORT_BASE + 0x3E8)
-#define DPORT_MEM_ACCESS_DBUG1_REG          (DR_REG_DPORT_BASE + 0x3EC)
-
-    TRACE("DPORT_MEM_ACCESS_DBUG0_REG=%x", *(volatile uint32_t*)(DPORT_MEM_ACCESS_DBUG0_REG));
-    TRACE("DPORT_MEM_ACCESS_DBUG1_REG=%x", *(volatile uint32_t*)(DPORT_MEM_ACCESS_DBUG1_REG));
-
-
-    TRACE("PREPARING TO MOVE");
-    pid_prepare();
-
-    while(1);
-
     // prepare the sizes for allocation
     size_t code_pages = ALIGN_UP(header->code_size, USER_PAGE_SIZE) / USER_PAGE_SIZE;
     size_t data_pages = ALIGN_UP(header->data_size + header->bss_size, USER_PAGE_SIZE) / USER_PAGE_SIZE;
@@ -63,12 +49,13 @@ err_t loader_load_app(const char* name, void* app, size_t app_size) {
         // copy it
         size_t to_copy = MINU(code_size_left, USER_PAGE_SIZE);
         void* krnl_ptr = (void*)CODE_PAGE_ADDR(page_idx);
-        memcpy(krnl_ptr, ptr, to_copy);
+        xthal_memcpy(krnl_ptr, ptr, to_copy);
         code_size_left -= to_copy;
         ptr += to_copy;
 
         // map it nicely
-        CHECK_AND_RETHROW(mmu_map(&task->mmu, MMU_SPACE_INST, i, PAGE_ENTRY(page_idx)));
+        CHECK_AND_RETHROW(mmu_map(&task->mmu, MMU_SPACE_CODE, i, PAGE_ENTRY(page_idx)));
+        TRACE("> %p --> %p", CODE_PAGE_ADDR(i), CODE_PAGE_ADDR(page_idx));
     }
 
     for (int i = 0; i < data_pages; i++) {
@@ -79,19 +66,22 @@ err_t loader_load_app(const char* name, void* app, size_t app_size) {
 
         // copy it
         size_t to_copy = MINU(data_size_left, USER_PAGE_SIZE);
-        void* krnl_ptr = (void*)CODE_PAGE_ADDR(page_idx);
-        memcpy(krnl_ptr, ptr, to_copy);
+        void* krnl_ptr = (void*)DATA_PAGE_ADDR(page_idx);
+        xthal_memcpy(krnl_ptr, ptr, to_copy);
         data_size_left -= to_copy;
         ptr += to_copy;
 
         // map it nicely
         CHECK_AND_RETHROW(mmu_map(&task->mmu, MMU_SPACE_DATA, i, PAGE_ENTRY(page_idx)));
+        TRACE("> %p --> %p", DATA_PAGE_ADDR(i), DATA_PAGE_ADDR(page_idx));
     }
+
+    // TODO: clear bss
 
     //
     // The task is ready to run
     //
-//    scheduler_ready_task(task);
+    scheduler_ready_task(task);
 
 cleanup:
     if (IS_ERROR(err)) {

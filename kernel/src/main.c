@@ -12,6 +12,7 @@
 #include "task/scheduler.h"
 #include "initrd.h"
 #include "task/loader.h"
+#include "util/string.h"
 
 /**
  * The stacks for each cpu
@@ -34,8 +35,16 @@ void* g_kernel_stacks[2] = {
 
 static err_t load_from_initrd() {
     err_t err = NO_ERROR;
+    initrd_header_t* header = NULL;
 
-    initrd_header_t* header = (initrd_header_t*)0x3FFC2000;
+    // where the loader stores the initrd
+    initrd_header_t* initrd_handoff = (void*)0x3FFC2000;
+
+    // copy it to the heap instead
+    header = malloc(initrd_handoff->total_size);
+    CHECK_ERROR(header != NULL, ERROR_OUT_OF_RESOURCES);
+    memcpy(header, initrd_handoff, initrd_handoff->total_size);
+
     TRACE("Loading from initrd (%d entries)", header->count);
 
     initrd_entry_t* entry = (initrd_entry_t*)(header + 1);
@@ -45,6 +54,10 @@ static err_t load_from_initrd() {
     }
 
 cleanup:
+    if (header != NULL) {
+        free(header);
+    }
+
     return err;
 }
 

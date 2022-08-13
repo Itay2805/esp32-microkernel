@@ -116,8 +116,7 @@ task_t* create_task(void* entry, const char* fmt, ...) {
 
     // set the SP to be the end of the stack, which is at the ucontext
     // area at the end
-//    task->ucontext->regs.ar[1] = (uint32_t) (DATA_PAGE_ADDR(UCTX_PAGE_INDEX) + offsetof(task_ucontext_t, stack) + STACK_SIZE);
-    task->ucontext->regs.ar[1] = (uint32_t) (task->ucontext->stack + STACK_SIZE);
+    task->ucontext->regs.ar[1] = (uint32_t) (DATA_PAGE_ADDR(UCTX_PAGE_INDEX) + offsetof(task_ucontext_t, stack) + STACK_SIZE);
 
     // set the name
     va_list va;
