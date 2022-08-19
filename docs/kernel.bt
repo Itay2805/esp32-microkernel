@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v12.0.1 Binary Template
+//
+//      File: kernel.bt
+//   Authors: Itay Almog (itay2828@gmail.com)
+//   Version: 1.0
+//   Purpose: Inspect ESP32 Microkernel Kernel file
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct kernel_header {
+    char magic[4];
+    uint code_size;
+    uint data_size;
+    uint vdso_size;
+    uint bss_size;
+    uint entry_point <format=hex>;
+};
+
+kernel_header header;
+local int code_offset = sizeof(kernel_header);
+local int data_offset = code_offset + header.code_size;
+local int vdso_offset = data_offset + header.data_size;
+
+FSeek(code_offset);
+char code[header.code_size];
+
+FSeek(data_offset);
+char data[header.data_size];
+
+FSeek(vdso_offset);
+char vdso[header.vdso_size];

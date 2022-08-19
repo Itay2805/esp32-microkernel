@@ -15,6 +15,7 @@ ENTRY(_start)
  * the total size is 128K we will separate it half and half
  */
 MEMORY {
+    DUMMY (R)       : ORIGIN = 0x00000000, len = 128K
     IRAM (RX)       : ORIGIN = 0x400A0000, len = 128K
     DRAM (RW)       : ORIGIN = 0x3FFE0000, len = 128K
     VDSO_IRAM (RX)  : ORIGIN = 0x4009E000, len = 8K
@@ -35,27 +36,23 @@ INCLUDE src/drivers/rtc_cntl.ld
 INCLUDE src/drivers/timg.ld
 INCLUDE src/drivers/uart.ld
 
-/**
- * The vdso is loaded to this address by the loader
- */
-g_vdso_header = 0x4009E000;
-
 /**********************/
 /* section definition */
 /**********************/
 
 SECTIONS {
 
-    .text : {
+    .header : {
         /* create the kernel header */
-        LONG(0x4c4e524b);    /* magic */
-        LONG(SIZEOF(.text)); /* code size */
-        LONG(SIZEOF(.data)); /* data size */
-        LONG(SIZEOF(.vdso)); /* vdso size */
-        LONG(_start);        /* entry pointer */
+        LONG(0x4c4e524b);           /* magic */
+        LONG(SIZEOF(.text));        /* code size */
+        LONG(SIZEOF(.data));        /* data size */
+        LONG(SIZEOF(.vdso));        /* vdso size */
+        LONG(0); /* bss size */
+        LONG(_start);               /* entry pointer */
+    } > DUMMY
 
-        /* now have the kernel code */
-        . = ALIGN(16);
+    .text : {
         *(.text .text.*)
         . = ALIGN(4);
     } > IRAM
@@ -63,12 +60,19 @@ SECTIONS {
     .data : {
         *(.rodata .rodata.*)
         *(.data .data.*)
+        . = ALIGN(4);
+        _data_end = .;
+
         *(.bss .bss.*)
         *(COMMON)
+        _bss_end = .;
 
-        /* the heap starts right after the data */
+        /* the heap starts right after the bss */
         . = ALIGN(16);
         _heap_start = .;
+    } > DRAM
+
+    .bss : {
     } > DRAM
 
     .vdso : {
@@ -76,5 +80,6 @@ SECTIONS {
     } > VDSO_IRAM
 
     /* calculate the heap size, which is the size left between code and data */
-    _heap_size = 128K - SIZEOF(.text) - SIZEOF(.data);
+    _heap_size = 128K - SIZEOF(.text) - (SIZEOF(.data) + SIZEOF(.bss));
+    _heap_end = _heap_start + _heap_size;
 }

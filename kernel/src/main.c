@@ -39,16 +39,17 @@ static err_t load_from_initrd() {
 
     // where the loader stores the initrd
     initrd_header_t* initrd_handoff = (void*)0x3FFC2000;
+    TRACE("Loading from initrd (%d entries - %d bytes)", initrd_handoff->count, initrd_handoff->total_size);
 
     // copy it to the heap instead
     header = malloc(initrd_handoff->total_size);
     CHECK_ERROR(header != NULL, ERROR_OUT_OF_RESOURCES);
     memcpy(header, initrd_handoff, initrd_handoff->total_size);
 
-    TRACE("Loading from initrd (%d entries)", header->count);
-
     initrd_entry_t* entry = (initrd_entry_t*)(header + 1);
+    TRACE("IN HERE - %s", entry->name);
     for (int i = 0; i < header->count; i++, entry = INITRD_NEXT_ENTRY(entry)) {
+        TRACE("LOL");
         TRACE("\tLoading %s - %d bytes", entry->name, entry->size);
         CHECK_AND_RETHROW(loader_load_app(entry->name, entry + 1, entry->size));
     }

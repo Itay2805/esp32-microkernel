@@ -37,6 +37,7 @@ typedef struct kernel_header {
     int32_t code_size;
     int32_t data_size;
     int32_t vdso_size;
+    int32_t bss_size;
     uint32_t entry_point;
 } kernel_header_t;
 
@@ -155,18 +156,19 @@ static void load_kernel() {
     };
     ASSERT(lfs_file_opencfg(&m_lfs, &kernel_file, "/kernel", LFS_O_RDONLY, &kernel_file_config) == 0);
 
-    // load the kernel header and verify it
-    kernel_header_t kernel_header;
+    // load the kernel header and verify it, don't store it on the stack
+    // since we might actually destroy our stack...
+    static kernel_header_t kernel_header;
     lfs_file_read(&m_lfs, &kernel_file, &kernel_header, sizeof(kernel_header));
     ASSERT(kernel_header.magic == KERNEL_MAGIC);
 
-    size_t code_offset = 0;
+    size_t code_offset = sizeof(kernel_header_t);
     size_t data_offset = code_offset + kernel_header.code_size;
     size_t vdso_offset = data_offset + kernel_header.data_size;
 
     // make sure the kernel is actually small enough
     ASSERT(kernel_header.magic == KERNEL_MAGIC);
-    ASSERT(kernel_header.code_size + kernel_header.data_size <= 128 * 1024);
+    ASSERT(kernel_header.code_size + kernel_header.data_size + kernel_header.bss_size <= 128 * 1024);
     ASSERT(kernel_header.code_size % 4 == 0);
     ASSERT(kernel_header.data_size % 4 == 0);
     ASSERT(kernel_header.vdso_size % 4 == 0);
@@ -188,10 +190,14 @@ static void load_kernel() {
     ASSERT(lfs_file_read(&m_lfs, &kernel_file, m_temp_buffer, kernel_header.vdso_size) == kernel_header.vdso_size);
     xthal_memcpy(KERNEL_VDSO_BASE, m_temp_buffer, kernel_header.vdso_size);
 
-    TRACE("\tLoading data %p (%d bytes)", KERNEL_DATA_BASE, kernel_header.data_size);
+    TRACE("\tLoading data %p (%d bytes + %d bytes bss)", KERNEL_DATA_BASE, kernel_header.data_size, kernel_header.bss_size);
     ASSERT(lfs_file_seek(&m_lfs, &kernel_file, data_offset, LFS_SEEK_SET) == data_offset);
     ASSERT(lfs_file_read(&m_lfs, &kernel_file, m_temp_buffer, kernel_header.data_size) == kernel_header.data_size);
+
+    // once this starts, we can't rely on anything! that's because from here we start to override
+    // the data section of the runtime kernel
     xthal_memcpy(KERNEL_DATA_BASE, m_temp_buffer, kernel_header.data_size);
+    memset(KERNEL_DATA_BASE + kernel_header.data_size, 0, kernel_header.bss_size);
 
     // NOTE: from here we should be super careful about everything since we just overrode the data
     //       region of the bootrom, potentially including the stack itself

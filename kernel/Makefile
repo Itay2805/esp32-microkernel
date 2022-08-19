@@ -25,10 +25,10 @@ CFLAGS 		+= -Wno-psabi
 CFLAGS 		+= -Wno-stringop-overflow
 
 # Size optimization, include debug info
-CFLAGS 		+= -Os -g3
+CFLAGS 		+= -Og -g3
 
 # Link time optimization
-CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
+#CFLAGS 		+= -flto -ffat-lto-objects -fuse-linker-plugin
 
 # Freestanding, static and short wchar_t (instead of int)
 CFLAGS		+= -ffreestanding -static -fshort-wchar
@@ -98,6 +98,8 @@ DEPS := $(OBJS:%.o=%.d)
 
 $(BIN_DIR)/kernel.bin: $(BUILD_DIR)/kernel.elf
 	@mkdir -p $(@D)
+	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.header
+	@$(OBJCOPY) -O binary -j .header $^ $(BUILD_DIR)/kernel.bin.header
 	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.text
 	@$(OBJCOPY) -O binary -j .text $^ $(BUILD_DIR)/kernel.bin.text
 	@echo OBJCOPY $(BUILD_DIR)/kernel.bin.data
@@ -106,6 +108,7 @@ $(BIN_DIR)/kernel.bin: $(BUILD_DIR)/kernel.elf
 	@$(OBJCOPY) -O binary -j .vdso $^ $(BUILD_DIR)/kernel.bin.vdso
 	@echo CAT $@
 	@cat \
+		$(BUILD_DIR)/kernel.bin.header \
 		$(BUILD_DIR)/kernel.bin.text \
 		$(BUILD_DIR)/kernel.bin.data \
 		$(BUILD_DIR)/kernel.bin.vdso > $@

@@ -28,11 +28,11 @@ SECTIONS {
 
     .header : {
         /* create the kernel header */
-        LONG(0x20505041);    /* magic */
-        LONG(SIZEOF(.text)); /* code size */
-        LONG(SIZEOF(.data)); /* data size */
-        LONG(SIZEOF(.bss));  /* bss size */
-        LONG(_start);        /* entry pointer */
+        LONG(0x20505041);               /* magic */
+        LONG(SIZEOF(.text));            /* code size */
+        LONG(SIZEOF(.data));            /* data size */
+        LONG(_bss_end - _data_end);     /* bss size */
+        LONG(_start);                   /* entry pointer */
     } > DUMMY
 
     .text : {
@@ -43,10 +43,12 @@ SECTIONS {
     .data : {
         *(.rodata .rodata.*)
         *(.data .data.*)
+        _data_end = .;
     } > DRAM
 
     .bss : {
         *(.bss .bss.*)
         *(COMMON)
+        _bss_end = .;
     } > DRAM
 }

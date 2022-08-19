@@ -53,6 +53,56 @@ static const char* m_cause_str[] = {
 
 };
 
+void* xthal_memcpy(void *dst, const void *src, unsigned len);
+
+typedef enum opcode_format {
+    XTENSA_RRR,
+    XTENSA_RRI4,
+    XTENSA_RRI8,
+    XTENSA_RI16,
+    XTENSA_RSR,
+    XTENSA_CALL,
+    XTENSA_CALLX,
+    XTENSA_BRI8,
+    XTENSA_BRI12,
+    XTENSA_RRRN,
+    XTENSA_RI7,
+    XTENSA_RI6,
+} opcode_format_t;
+
+typedef union xtensa_opcode {
+    uint8_t op0 : 4;
+    struct {
+        uint8_t op0 : 4;
+        uint8_t t : 4;
+        uint8_t s : 4;
+        uint8_t r : 4;
+        uint8_t imm8;
+    } rri8;
+    uint32_t value;
+} PACKED xtensa_opcode_t;
+
+static void print_opcodes(void* ptr, int32_t len) {
+    while (len > 0) {
+        xtensa_opcode_t opcode = { .value = 0 };
+        xthal_memcpy(&opcode, ptr, 3);
+
+        printf("[-] %08x: ", ptr);
+
+        switch (opcode.op0) {
+            case 0b0010: {
+                switch (opcode.rri8.r) {
+                    case 0b0010: printf("L32I a%d, a%d, %u", opcode.rri8.t, opcode.rri8.s, opcode.rri8.imm8); len += 3; break;
+                    default: printf("Invalid opcode %08x", opcode.value); len -= 3; break;
+                }
+            } break;
+            default: printf("Invalid opcode %08x", opcode.value); len -= 3; break;
+        }
+
+        printf("\n\r");
+    }
+}
+
 void common_exception_handler(task_regs_t* regs) {
     int cause = __RSR(EXCCAUSE);
 
@@ -86,9 +136,13 @@ void common_exception_handler(task_regs_t* regs) {
         cause == StoreProhibitedCause
     ) {
         printf(" EXCVADDR=%08x", __RSR(EXCVADDR));
-    }
+        printf("\n\r");
+    } else if (cause == IllegalInstructionCause) {
+        printf("\n\r");
 
-    printf("\n\r");
+        // TODO: translate if has mmu
+        print_opcodes((void*)regs->pc, 16);
+    }
 
     // dump everything
     task_regs_dump(regs);
