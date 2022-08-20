@@ -48,7 +48,6 @@ SECTIONS {
         LONG(SIZEOF(.text));        /* code size */
         LONG(SIZEOF(.data));        /* data size */
         LONG(SIZEOF(.vdso));        /* vdso size */
-        LONG(0); /* bss size */
         LONG(_start);               /* entry pointer */
     } > DUMMY
 
@@ -72,14 +71,11 @@ SECTIONS {
         _heap_start = .;
     } > DRAM
 
-    .bss : {
-    } > DRAM
-
     .vdso : {
         *(.vdso .vdso.*)
     } > VDSO_IRAM
 
     /* calculate the heap size, which is the size left between code and data */
-    _heap_size = 128K - SIZEOF(.text) - (SIZEOF(.data) + SIZEOF(.bss));
+    _heap_size = 128K - SIZEOF(.text) - SIZEOF(.data);
     _heap_end = _heap_start + _heap_size;
 }

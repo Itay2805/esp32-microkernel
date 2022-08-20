@@ -1,4 +1,5 @@
 out
+toolchain/qemu
 toolchain/esptool-*-linux-amd64
 toolchain/xtensa-esp32-elf
 toolchain/*.tar*

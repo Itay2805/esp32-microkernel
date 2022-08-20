@@ -37,6 +37,11 @@ For more indepth information it is the best to look at the code.
 
 Currently, I only support building from linux.
 
+You will need the following python dependencies:
+* `esptool`
+* `littlefs-python`
+* `tqdm`
+
 First you will need to get the toolchain:
 ```shell
 make fetch-toolchain
@@ -49,7 +54,10 @@ make
 
 This will build a full system image that can be used under `out/image.bin`
 
-To test run you can use (note that this will also build if needed)
+To test run you can use (note that this will also build if needed), note that you might need to run this as 
+root if you don't have permission to use the serial device directly.
 ```shell
 make run
 ```
+
+If you want to use qemu then you will need to build it first 

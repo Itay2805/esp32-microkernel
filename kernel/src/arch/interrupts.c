@@ -137,12 +137,13 @@ void common_exception_handler(task_regs_t* regs) {
     ) {
         printf(" EXCVADDR=%08x", __RSR(EXCVADDR));
         printf("\n\r");
-    } else if (cause == IllegalInstructionCause) {
-        printf("\n\r");
-
-        // TODO: translate if has mmu
-        print_opcodes((void*)regs->pc, 16);
     }
+
+    printf("\n\r");
+
+    // TODO: translate if has mmu
+    print_opcodes((void*)regs->pc, 16);
+    ERROR("");
 
     // dump everything
     task_regs_dump(regs);

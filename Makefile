@@ -60,8 +60,10 @@ init:
 TOOLCHAIN_PATH	:= toolchain
 include toolchain/esptool.mk
 include toolchain/toolchain.mk
+include toolchain/qemu.mk
 
-QEMU			?= /home/tomato/checkouts/esp_qemu/build/qemu-system-xtensa
+$(QEMU):
+	$(MAKE) -C toolchain fetch-qemu
 
 objdump: kernel
 	$(OBJDUMP) -d kernel/out/build/kernel.elf > kernel.S
@@ -69,7 +71,7 @@ objdump: kernel
 run: all
 	./scripts/run_esp32.py
 
-qemu-debug: all
+qemu-debug: $(QEMU) all
 	 $(QEMU) \
 		-machine esp32 \
 		-serial stdio \
@@ -79,7 +81,7 @@ qemu-debug: all
 		-s -S \
 		-d int
 
-qemu: all
+qemu: $(QEMU) all
 	 $(QEMU) \
 		 --trace "*mtd*" -machine esp32 \
 		-serial stdio \
